@@ -1,53 +1,59 @@
 import React from 'react';
 import { AreaType } from '../types';
 import { sounds } from '../utils/audio';
-import { Sprout, Fish, Dices, Trees, Store } from 'lucide-react';
+import { Sprout, Fish, Dices, Trees, Store, Home, Car, ShoppingBag } from 'lucide-react';
 
 interface NavigationDockProps {
   currentArea: AreaType;
   onChangeArea: (area: AreaType) => void;
   onOpenShop: () => void;
+  onOpenHouse?: () => void;
+  onOpenVehicle?: () => void;
+  onOpenMarket?: () => void;
 }
 
 export const NavigationDock: React.FC<NavigationDockProps> = ({
   currentArea,
   onChangeArea,
   onOpenShop,
+  onOpenHouse,
+  onOpenVehicle,
+  onOpenMarket,
 }) => {
   const navItems = [
     {
       id: 'farm' as AreaType,
-      label: 'Nong Trai',
+      label: 'Nông Trại',
       icon: Sprout,
       activeBg: 'bg-[#15803d]',
-      tag: 'Trong trot',
+      tag: 'Trồng trọt',
     },
     {
       id: 'fishing' as AreaType,
-      label: 'Ho Cau',
+      label: 'Hồ Câu',
       icon: Fish,
       activeBg: 'bg-[#0369a1]',
-      tag: 'Sinh thai',
+      tag: 'Sinh thái',
     },
     {
       id: 'casino' as AreaType,
-      label: 'Giai Tri',
+      label: 'Bầu Cua',
       icon: Dices,
       activeBg: 'bg-[#6b21a8]',
-      tag: 'Bau Cua',
+      tag: 'Sới bạc',
     },
     {
       id: 'park' as AreaType,
-      label: 'Cong Vien',
+      label: 'Công Viên',
       icon: Trees,
       activeBg: 'bg-[#92400e]',
-      tag: 'Giao luu',
+      tag: 'Giao lưu',
     },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#1c0d06] border-t-4 border-[#120703] px-2 py-2 shadow-[0_-6px_0_0_rgba(0,0,0,0.5)] select-none">
-      <div className="max-w-4xl mx-auto flex items-center justify-between sm:justify-center sm:gap-3">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#1c0d06] border-t-4 border-[#120703] px-2 py-1.5 shadow-[0_-6px_0_0_rgba(0,0,0,0.5)] select-none">
+      <div className="max-w-5xl mx-auto flex items-center justify-between sm:justify-center gap-1.5 sm:gap-2">
         {navItems.map((item) => {
           const isActive = currentArea === item.id;
           const Icon = item.icon;
@@ -58,46 +64,73 @@ export const NavigationDock: React.FC<NavigationDockProps> = ({
                 sounds.playClick();
                 onChangeArea(item.id);
               }}
-              className={`pixel-btn relative flex flex-col items-center justify-center px-2 py-1.5 sm:px-4 sm:py-2 ${
+              className={`pixel-btn relative flex flex-col items-center justify-center px-2 py-1 sm:px-3 sm:py-1.5 ${
                 isActive
                   ? `${item.activeBg} text-white -translate-y-1 shadow-[0_3px_0_0_#fde047]`
                   : 'bg-[#35190d] text-amber-200/80 hover:bg-[#452212]'
               }`}
             >
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1">
                 <Icon
-                  className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                  className={`w-4 h-4 ${
                     isActive ? 'text-yellow-300 animate-bounce' : 'text-amber-400'
                   }`}
                 />
-                <span className="font-pixel text-[9px] sm:text-[10px] tracking-tight">
+                <span className="font-pixel text-[9px] sm:text-[10px]">
                   {item.label}
                 </span>
               </div>
-              <span className="text-[8px] text-amber-300/80 font-mono hidden sm:block mt-0.5">
-                {item.tag}
-              </span>
             </button>
           );
         })}
 
+        {/* Chợ Đêm (Marketplace) Button */}
+        {onOpenMarket && (
+          <button
+            onClick={() => { sounds.playClick(); onOpenMarket(); }}
+            className="pixel-btn bg-amber-800 hover:bg-amber-700 text-amber-100 px-2 py-1 sm:px-3 sm:py-1.5 flex items-center gap-1 font-pixel text-[9px]"
+            title="Sàn Giao Dịch & Chợ Đêm"
+          >
+            <ShoppingBag className="w-3.5 h-3.5 text-yellow-400" />
+            <span className="hidden sm:inline">Chợ Đêm</span>
+          </button>
+        )}
+
+        {/* Nhà Ở (House) Button */}
+        {onOpenHouse && (
+          <button
+            onClick={() => { sounds.playClick(); onOpenHouse(); }}
+            className="pixel-btn bg-indigo-900 hover:bg-indigo-800 text-indigo-100 px-2 py-1 sm:px-3 sm:py-1.5 flex items-center gap-1 font-pixel text-[9px]"
+            title="Nhà Ở & Biệt Thự Đại Gia"
+          >
+            <Home className="w-3.5 h-3.5 text-cyan-300" />
+            <span className="hidden sm:inline">Nhà Ở</span>
+          </button>
+        )}
+
+        {/* Xe Cộ (Vehicle) Button */}
+        {onOpenVehicle && (
+          <button
+            onClick={() => { sounds.playClick(); onOpenVehicle(); }}
+            className="pixel-btn bg-fuchsia-900 hover:bg-fuchsia-800 text-fuchsia-100 px-2 py-1 sm:px-3 sm:py-1.5 flex items-center gap-1 font-pixel text-[9px]"
+            title="Showroom Xe Cộ & Thú Cưỡi"
+          >
+            <Car className="w-3.5 h-3.5 text-yellow-300" />
+            <span className="hidden sm:inline">Xe Cộ</span>
+          </button>
+        )}
+
         {/* Cửa Hàng (Shop) Button */}
         <button
-          onClick={() => {
-            sounds.playClick();
-            onOpenShop();
-          }}
-          className="pixel-btn flex flex-col items-center justify-center px-2.5 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-b from-yellow-500 to-amber-700 text-black font-black -translate-y-0.5 hover:-translate-y-1"
+          onClick={() => { sounds.playClick(); onOpenShop(); }}
+          className="pixel-btn flex items-center justify-center px-2 py-1 sm:px-3 sm:py-1.5 bg-gradient-to-b from-yellow-500 to-amber-600 text-black font-black hover:-translate-y-0.5"
         >
-          <div className="flex items-center gap-1.5">
-            <Store className="w-4 h-4 sm:w-5 sm:h-5 text-black animate-pulse" />
+          <div className="flex items-center gap-1">
+            <Store className="w-4 h-4 text-black animate-pulse" />
             <span className="font-pixel text-[9px] sm:text-[10px] text-black">
-              Cua Hang
+              Shop
             </span>
           </div>
-          <span className="text-[8px] text-black/80 font-mono hidden sm:block mt-0.5">
-            Mua Ban
-          </span>
         </button>
       </div>
     </nav>

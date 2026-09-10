@@ -76,6 +76,115 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// ==========================================
+// GAME ACTION REST APIS (SERVER-AUTHORITATIVE)
+// ==========================================
+
+import { 
+  handleBuyShopItem, 
+  handleSellInventoryItem, 
+  handlePlantCrop, 
+  handleHarvestCrop, 
+  handleCatchFish, 
+  handleBuyHouse, 
+  handleBuyVehicle,
+  ALL_CROPS,
+  ALL_FISH,
+  ALL_HOUSES,
+  ALL_VEHICLES,
+  ALL_CONSUMABLES
+} from './gameEconomy.js';
+import { claimQuestReward } from './questEngine.js';
+import { listMarketplaceItem, buyMarketplaceItem, getActiveMarketplaceListings } from './tradeEngine.js';
+
+// Middleware xác thực token người chơi
+function requireUser(req, res, next) {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : (req.body && req.body.token) || req.query.token;
+  if (!token) return res.status(401).json({ success: false, error: 'Thiếu mã xác thực (Token).' });
+  const user = getUserByToken(token);
+  if (!user) return res.status(401).json({ success: false, error: 'Phiên đăng nhập không hợp lệ.' });
+  req.user = user;
+  next();
+}
+
+// Mua đồ từ Shop
+app.post('/api/game/buy-item', requireUser, (req, res) => {
+  const { itemId, count = 1 } = req.body;
+  const result = handleBuyShopItem(req.user.id, itemId, Number(count));
+  res.json(result);
+});
+
+// Bán đồ cho Thương Lái
+app.post('/api/game/sell-item', requireUser, (req, res) => {
+  const { itemId, count = 1 } = req.body;
+  const result = handleSellInventoryItem(req.user.id, itemId, Number(count));
+  res.json(result);
+});
+
+// Gieo hạt giống
+app.post('/api/game/plant', requireUser, (req, res) => {
+  const { plotId, cropId } = req.body;
+  const result = handlePlantCrop(req.user.id, Number(plotId), cropId);
+  res.json(result);
+});
+
+// Thu hoạch nông sản
+app.post('/api/game/harvest', requireUser, (req, res) => {
+  const { plotId } = req.body;
+  const result = handleHarvestCrop(req.user.id, Number(plotId));
+  res.json(result);
+});
+
+// Câu cá
+app.post('/api/game/fish', requireUser, (req, res) => {
+  const { rodId, baitId } = req.body;
+  const result = handleCatchFish(req.user.id, rodId, baitId);
+  res.json(result);
+});
+
+// Mua & Nâng cấp Nhà ở
+app.post('/api/game/buy-house', requireUser, (req, res) => {
+  const { houseId } = req.body;
+  const result = handleBuyHouse(req.user.id, houseId);
+  res.json(result);
+});
+
+// Mua Xe cộ / Thú cưỡi
+app.post('/api/game/buy-vehicle', requireUser, (req, res) => {
+  const { vehicleId } = req.body;
+  const result = handleBuyVehicle(req.user.id, vehicleId);
+  res.json(result);
+});
+
+// Nhận thưởng nhiệm vụ
+app.post('/api/game/claim-quest', requireUser, (req, res) => {
+  const { questId } = req.body;
+  const result = claimQuestReward(req.user.id, questId);
+  res.json(result);
+});
+
+// Chợ Đêm: Lấy danh sách hàng bán
+app.get('/api/game/market', (req, res) => {
+  const listings = getActiveMarketplaceListings(50);
+  res.json({ success: true, listings });
+});
+
+// Chợ Đêm: Treo bán món đồ
+app.post('/api/game/market/list', requireUser, (req, res) => {
+  const { itemId, count = 1, priceXu = 100 } = req.body;
+  const result = listMarketplaceItem(req.user.id, itemId, Number(count), Number(priceXu));
+  res.json(result);
+});
+
+// Chợ Đêm: Mua món đồ
+app.post('/api/game/market/buy', requireUser, (req, res) => {
+  const { listingId } = req.body;
+  const result = buyMarketplaceItem(req.user.id, Number(listingId));
+  res.json(result);
+});
+
+
 // 4. Đăng ký Admin Routes
 registerAdminRoutes(app, broadcastGlobalMessage);
 

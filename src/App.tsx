@@ -22,6 +22,10 @@ import { LeaderboardModal } from './components/LeaderboardModal';
 import { ProfileModal } from './components/ProfileModal';
 import { LoginModal } from './components/LoginModal';
 import { AdminModal } from './components/AdminModal';
+import { HouseModal } from './components/HouseModal';
+import { VehicleShopModal } from './components/VehicleShopModal';
+import { MarketplaceModal } from './components/MarketplaceModal';
+
 
 export default function App() {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -36,9 +40,13 @@ export default function App() {
   const [showLeaderboard, setShowLeaderboard] = useState<boolean>(false);
   const [showProfile, setShowProfile] = useState<boolean>(false);
   const [showAdmin, setShowAdmin] = useState<boolean>(false);
+  const [showHouse, setShowHouse] = useState<boolean>(false);
+  const [showVehicle, setShowVehicle] = useState<boolean>(false);
+  const [showMarket, setShowMarket] = useState<boolean>(false);
 
   // Global marquee announcement from Admin
   const [globalAnnouncement, setGlobalAnnouncement] = useState<{ text: string; sender: string } | null>(null);
+
 
   // Sound state
   const [isMuted, setIsMuted] = useState<boolean>(sounds.isMuted);
@@ -266,6 +274,9 @@ export default function App() {
             currentArea={currentArea}
             onChangeArea={setCurrentArea}
             onOpenShop={() => setShowShop(true)}
+            onOpenHouse={() => setShowHouse(true)}
+            onOpenVehicle={() => setShowVehicle(true)}
+            onOpenMarket={() => setShowMarket(true)}
           />
 
           {/* Modals */}
@@ -273,6 +284,36 @@ export default function App() {
             <AdminModal
               token={token}
               onClose={() => setShowAdmin(false)}
+              onShowMessage={showMessage}
+            />
+          )}
+
+          {showHouse && (
+            <HouseModal
+              user={user}
+              token={token}
+              onUpdateUser={handleUpdateUser}
+              onClose={() => setShowHouse(false)}
+              onShowMessage={showMessage}
+            />
+          )}
+
+          {showVehicle && (
+            <VehicleShopModal
+              user={user}
+              token={token}
+              onUpdateUser={handleUpdateUser}
+              onClose={() => setShowVehicle(false)}
+              onShowMessage={showMessage}
+            />
+          )}
+
+          {showMarket && (
+            <MarketplaceModal
+              user={user}
+              token={token}
+              onUpdateUser={handleUpdateUser}
+              onClose={() => setShowMarket(false)}
               onShowMessage={showMessage}
             />
           )}
@@ -319,6 +360,7 @@ export default function App() {
               onShowMessage={showMessage}
             />
           )}
+
         </>
       )}
     </div>
