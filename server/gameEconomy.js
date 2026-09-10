@@ -426,6 +426,63 @@ export function handleBuyVehicle(userId, vehicleId) {
 }
 
 /**
+ * Trang Bị / Cất Phương Tiện (Equip / Unequip Vehicle)
+ */
+export function handleEquipVehicle(userId, vehicleId) {
+  const user = getUserById(userId);
+  if (!user) return { success: false, error: 'Không tìm thấy người chơi.' };
+
+  const vehicles = user.vehicles || [];
+  const targetId = vehicleId ? String(vehicleId).trim() : '';
+
+  if (targetId && !vehicles.includes(targetId)) {
+    return { success: false, error: 'Bạn chưa sở hữu phương tiện này.' };
+  }
+
+  saveUserProfile(userId, {
+    equippedVehicleId: targetId,
+  });
+
+  const vehDef = ALL_VEHICLES.find(v => v.id === targetId);
+  const msg = targetId ? `Đã trang bị phương tiện ${vehDef?.name || ''} để dạo phố!` : 'Đã cất phương tiện vào gara.';
+  return { success: true, user: getUserById(userId), message: msg };
+}
+
+/**
+ * Bán Lại Phương Tiện Cho Showroom (Sell / Refund Vehicle)
+ */
+export function handleSellVehicle(userId, vehicleId) {
+  const user = getUserById(userId);
+  if (!user) return { success: false, error: 'Không tìm thấy người chơi.' };
+
+  const vehicles = user.vehicles || [];
+  if (!vehicles.includes(vehicleId)) {
+    return { success: false, error: 'Bạn không sở hữu phương tiện này để bán.' };
+  }
+
+  const vehDef = ALL_VEHICLES.find(v => v.id === vehicleId);
+  if (!vehDef) return { success: false, error: 'Xe không hợp lệ.' };
+
+  // Hoàn lại 70% giá trị Xu + quy đổi Lượng
+  const refundXu = Math.max(500, Math.floor((vehDef.priceXu || 0) * 0.70) + ((vehDef.priceLuong || 0) * 1000));
+
+  const updatedVehicles = vehicles.filter(v => v !== vehicleId);
+  const updatedEquipped = user.equippedVehicleId === vehicleId ? '' : user.equippedVehicleId;
+
+  updateUserBalance(userId, refundXu, 0);
+  saveUserProfile(userId, {
+    vehicles: updatedVehicles,
+    equippedVehicleId: updatedEquipped,
+  });
+
+  return {
+    success: true,
+    user: getUserById(userId),
+    message: `Đã bán lại ${vehDef.name} cho Showroom và nhận lại ${refundXu.toLocaleString('vi-VN')} Xu!`,
+  };
+}
+
+/**
  * Mua Con Giống Chăn Nuôi (Gà con, Heo con)
  */
 export function handleBuyAnimal(userId, animalType) {

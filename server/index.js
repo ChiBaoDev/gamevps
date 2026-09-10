@@ -101,6 +101,8 @@ import {
   handleCatchFish, 
   handleBuyHouse, 
   handleBuyVehicle,
+  handleEquipVehicle,
+  handleSellVehicle,
   handleBuyAnimal,
   handleFeedAnimal,
   handleCollectAnimalProduct,
@@ -175,6 +177,20 @@ app.post('/api/game/buy-house', requireUser, (req, res) => {
 app.post('/api/game/buy-vehicle', requireUser, (req, res) => {
   const { vehicleId } = req.body;
   const result = handleBuyVehicle(req.user.id, vehicleId);
+  res.json(result);
+});
+
+// Trang Bị / Cất Xe cộ
+app.post(['/api/game/equip-vehicle', '/api/game/vehicles/equip'], requireUser, (req, res) => {
+  const { vehicleId } = req.body;
+  const result = handleEquipVehicle(req.user.id, vehicleId);
+  res.json(result);
+});
+
+// Bán Lại Xe cộ cho Showroom (Nhận 70% Xu)
+app.post(['/api/game/sell-vehicle', '/api/game/vehicles/sell'], requireUser, (req, res) => {
+  const { vehicleId } = req.body;
+  const result = handleSellVehicle(req.user.id, vehicleId);
   res.json(result);
 });
 
