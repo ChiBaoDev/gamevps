@@ -1,0 +1,6 @@
+{
+  "name": "Avatar World - Nông Trại & Câu Cá",
+  "description": "Web game phong cách Avatar TeaMobi huyền thoại: Nông trại trồng cây, hồ câu cá sinh thái, mini game bầu cua vòng quay và thời trang đường phố.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

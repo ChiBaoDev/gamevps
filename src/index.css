@@ -1,0 +1,191 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .font-pixel {
+    font-family: 'Press Start 2P', monospace;
+  }
+  .font-vt323 {
+    font-family: 'VT323', monospace;
+  }
+
+  /* Pixel text with 8-bit drop shadow */
+  .pixel-shadow {
+    text-shadow: 
+      2px 2px 0 #000,
+      -1px -1px 0 #000,
+      1px -1px 0 #000,
+      -1px 1px 0 #000,
+      1px 1px 0 #000;
+  }
+
+  .pixel-shadow-sm {
+    text-shadow: 1px 1px 0 #000;
+  }
+
+  /* Beveled Pixel Box Framing - TeaMobi Java Avatar Aesthetic */
+  .pixel-box {
+    border: 3px solid #170a04;
+    box-shadow: 
+      inset -3px -3px 0 0 #3a1e0f,
+      inset 3px 3px 0 0 #92400e,
+      0 4px 0 0 rgba(0, 0, 0, 0.45);
+    image-rendering: pixelated;
+  }
+
+  .pixel-box-gold {
+    border: 3px solid #331400;
+    box-shadow: 
+      inset -3px -3px 0 0 #9a3412,
+      inset 3px 3px 0 0 #fde047,
+      0 4px 0 0 rgba(0, 0, 0, 0.5);
+    image-rendering: pixelated;
+  }
+
+  .pixel-box-wood {
+    border: 3px solid #1e0f08;
+    box-shadow: 
+      inset -3px -3px 0 0 #451a03,
+      inset 3px 3px 0 0 #b45309,
+      0 4px 0 0 rgba(0, 0, 0, 0.4);
+    image-rendering: pixelated;
+  }
+
+  .pixel-box-green {
+    border: 3px solid #0f2910;
+    box-shadow: 
+      inset -3px -3px 0 0 #14532d,
+      inset 3px 3px 0 0 #4ade80,
+      0 4px 0 0 rgba(0, 0, 0, 0.4);
+    image-rendering: pixelated;
+  }
+
+  .pixel-box-water {
+    border: 3px solid #082f49;
+    box-shadow: 
+      inset -3px -3px 0 0 #0369a1,
+      inset 3px 3px 0 0 #38bdf8,
+      0 4px 0 0 rgba(0, 0, 0, 0.4);
+    image-rendering: pixelated;
+  }
+
+  /* Farm Plot Tile - Chunky Square Pixel Dirt */
+  .pixel-plot {
+    border: 3px solid #1a0c05;
+    box-shadow: 
+      inset -3px -3px 0 0 #3b1b0b,
+      inset 3px 3px 0 0 #78350f,
+      0 3px 0 0 rgba(0, 0, 0, 0.35);
+    image-rendering: pixelated;
+    transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
+  }
+
+  .pixel-plot:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      inset -3px -3px 0 0 #451a03,
+      inset 3px 3px 0 0 #b45309,
+      0 5px 0 0 rgba(0, 0, 0, 0.45);
+  }
+
+  .pixel-plot:active {
+    transform: translateY(1px);
+    box-shadow: 
+      inset 2px 2px 0 0 #1a0c05,
+      0 1px 0 0 rgba(0, 0, 0, 0.35);
+  }
+
+  /* Chunky 3D Push Button */
+  .pixel-btn {
+    border: 2px solid #170a04;
+    box-shadow: 
+      inset -2px -3px 0 0 rgba(0, 0, 0, 0.45),
+      inset 2px 2px 0 0 rgba(255, 255, 255, 0.35),
+      0 3px 0 0 rgba(0, 0, 0, 0.45);
+    transition: transform 0.05s ease, box-shadow 0.05s ease;
+    image-rendering: pixelated;
+    user-select: none;
+  }
+
+  .pixel-btn:active {
+    transform: translateY(2px);
+    box-shadow: 
+      inset 2px 2px 0 0 rgba(0, 0, 0, 0.5),
+      0 1px 0 0 rgba(0, 0, 0, 0.45);
+  }
+
+  /* Segmented Retro Pixel Progress Bar */
+  .pixel-progress-track {
+    border: 2px solid #170a04;
+    background-color: #0d0603;
+    box-shadow: inset 1px 1px 0 0 rgba(0, 0, 0, 0.7);
+    image-rendering: pixelated;
+  }
+
+  .pixel-progress-fill {
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.45),
+      inset 0 -1px 0 0 rgba(0, 0, 0, 0.35);
+  }
+
+  /* Dithered retro soil texture */
+  .soil-texture {
+    background-image: 
+      linear-gradient(45deg, #442211 25%, transparent 25%), 
+      linear-gradient(-45deg, #442211 25%, transparent 25%), 
+      linear-gradient(45deg, transparent 75%, #442211 75%), 
+      linear-gradient(-45deg, transparent 75%, #442211 75%);
+    background-size: 8px 8px;
+    background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+  }
+
+  /* Scanline CRT overlay */
+  .scanline-overlay {
+    background: linear-gradient(
+      rgba(18, 16, 16, 0) 50%, 
+      rgba(0, 0, 0, 0.18) 50%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+  }
+
+  /* Retro Nokia S40 / Java Dither Pattern */
+  .retro-dither-bg {
+    background-color: #1a0f0a;
+    background-image: radial-gradient(#2d170e 18%, transparent 19%);
+    background-size: 6px 6px;
+  }
+}
+
+/* Custom retro scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #170a04;
+  border: 1px solid #33180c;
+}
+::-webkit-scrollbar-thumb {
+  background: #b45309;
+  border: 2px solid #170a04;
+  box-shadow: inset 1px 1px 0 0 #fde047;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #d97706;
+}
+
+@keyframes bounce-gentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-avatar-idle {
+  animation: bounce-gentle 1.2s infinite ease-in-out;
+}
+
+/* Global crisp pixel rendering */
+img, svg, canvas {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
