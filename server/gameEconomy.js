@@ -8,23 +8,23 @@ import { updateQuestProgress } from './questEngine.js';
 
 export const ALL_CROPS = [
   // Cây ngắn ngày
-  { id: 'rice', name: 'Lúa Nước', seedName: 'Hạt Giống Lúa', growDuration: 12, seedPrice: 20, sellPrice: 50, expReward: 10, icon: '🌾', seedIcon: '🌱', levelRequired: 1 },
-  { id: 'carrot', name: 'Cà Rốt Đỏ', seedName: 'Hạt Cà Rốt', growDuration: 20, seedPrice: 45, sellPrice: 115, expReward: 20, icon: '🥕', seedIcon: '🌱', levelRequired: 1 },
-  { id: 'corn', name: 'Bắp Ngô Vàng', seedName: 'Hạt Bắp Ngô', growDuration: 28, seedPrice: 65, sellPrice: 170, expReward: 30, icon: '🌽', seedIcon: '🌱', levelRequired: 2 },
-  { id: 'tomato', name: 'Cà Chua Bi', seedName: 'Hạt Cà Chua', growDuration: 35, seedPrice: 85, sellPrice: 230, expReward: 40, icon: '🍅', seedIcon: '🌱', levelRequired: 2 },
-  { id: 'potato', name: 'Khoai Lang Mật', seedName: 'Củ Khoai Giống', growDuration: 45, seedPrice: 110, sellPrice: 300, expReward: 50, icon: '🥔', seedIcon: '🌱', levelRequired: 3 },
+  { id: 'rice', name: 'Lúa Nước', seedName: 'Hạt Giống Lúa', growDuration: 30, seedPrice: 20, sellPrice: 55, expReward: 10, icon: '🌾', seedIcon: '🌱', levelRequired: 1 },
+  { id: 'carrot', name: 'Cà Rốt Đỏ', seedName: 'Hạt Cà Rốt', growDuration: 60, seedPrice: 45, sellPrice: 120, expReward: 20, icon: '🥕', seedIcon: '🌱', levelRequired: 1 },
+  { id: 'corn', name: 'Bắp Ngô Vàng', seedName: 'Hạt Bắp Ngô', growDuration: 90, seedPrice: 65, sellPrice: 180, expReward: 30, icon: '🌽', seedIcon: '🌱', levelRequired: 2 },
+  { id: 'tomato', name: 'Cà Chua Bi', seedName: 'Hạt Cà Chua', growDuration: 120, seedPrice: 85, sellPrice: 240, expReward: 40, icon: '🍅', seedIcon: '🌱', levelRequired: 2 },
+  { id: 'potato', name: 'Khoai Lang Mật', seedName: 'Củ Khoai Giống', growDuration: 150, seedPrice: 110, sellPrice: 320, expReward: 50, icon: '🥔', seedIcon: '🌱', levelRequired: 3 },
   // Hoa cảnh khoe sắc
-  { id: 'marigold', name: 'Hoa Cúc Vàng', seedName: 'Hạt Cúc Vàng', growDuration: 55, seedPrice: 140, sellPrice: 390, expReward: 65, icon: '🌼', seedIcon: '🌱', levelRequired: 3 },
-  { id: 'rose', name: 'Hoa Hồng Đỏ', seedName: 'Hạt Hoa Hồng', growDuration: 65, seedPrice: 180, sellPrice: 520, expReward: 85, icon: '🌹', seedIcon: '🌱', levelRequired: 4 },
-  { id: 'sunflower', name: 'Hoa Hướng Dương', seedName: 'Hạt Hướng Dương', growDuration: 75, seedPrice: 230, sellPrice: 680, expReward: 110, icon: '🌻', seedIcon: '🌱', levelRequired: 4 },
-  { id: 'lotus', name: 'Hoa Sen Ngọc', seedName: 'Củ Sen Ngọc', growDuration: 90, seedPrice: 320, sellPrice: 960, expReward: 150, icon: '🪷', seedIcon: '✨', levelRequired: 5 },
-  { id: 'orchid', name: 'Hoa Lan Quý Tộc', seedName: 'Mầm Lan Rừng', growDuration: 110, seedPrice: 450, sellPrice: 1400, expReward: 200, icon: '🌸', seedIcon: '✨', levelRequired: 6 },
+  { id: 'marigold', name: 'Hoa Cúc Vàng', seedName: 'Hạt Cúc Vàng', growDuration: 180, seedPrice: 140, sellPrice: 420, expReward: 65, icon: '🌼', seedIcon: '🌱', levelRequired: 3 },
+  { id: 'rose', name: 'Hoa Hồng Đỏ', seedName: 'Hạt Hoa Hồng', growDuration: 240, seedPrice: 180, sellPrice: 560, expReward: 85, icon: '🌹', seedIcon: '🌱', levelRequired: 4 },
+  { id: 'sunflower', name: 'Hoa Hướng Dương', seedName: 'Hạt Hướng Dương', growDuration: 300, seedPrice: 230, sellPrice: 720, expReward: 110, icon: '🌻', seedIcon: '🌱', levelRequired: 4 },
+  { id: 'lotus', name: 'Hoa Sen Ngọc', seedName: 'Củ Sen Ngọc', growDuration: 360, seedPrice: 320, sellPrice: 1000, expReward: 150, icon: '🪷', seedIcon: '✨', levelRequired: 5 },
+  { id: 'orchid', name: 'Hoa Lan Quý Tộc', seedName: 'Mầm Lan Rừng', growDuration: 450, seedPrice: 450, sellPrice: 1500, expReward: 200, icon: '🌸', seedIcon: '✨', levelRequired: 6 },
   // Trái cây cao cấp
-  { id: 'watermelon', name: 'Dưa Hấu Đỏ', seedName: 'Hạt Dưa Hấu', growDuration: 120, seedPrice: 550, sellPrice: 1800, expReward: 250, icon: '🍉', seedIcon: '🌱', levelRequired: 6 },
-  { id: 'dragonfruit', name: 'Thanh Long Ruột Đỏ', seedName: 'Nhánh Thanh Long', growDuration: 140, seedPrice: 700, sellPrice: 2300, expReward: 320, icon: '🐉', seedIcon: '🌱', levelRequired: 7 },
-  { id: 'grape', name: 'Nho Tím Ninh Thuận', seedName: 'Giống Nho Tím', growDuration: 160, seedPrice: 900, sellPrice: 3000, expReward: 400, icon: '🍇', seedIcon: '🌱', levelRequired: 8 },
-  { id: 'strawberry', name: 'Dâu Tây Hoàng Gia', seedName: 'Hạt Dâu Tây Vàng', growDuration: 180, seedPrice: 1200, sellPrice: 4200, expReward: 550, icon: '🍓', seedIcon: '✨', levelRequired: 9 },
-  { id: 'golden_apple', name: 'Táo Vàng Thần Thoại', seedName: 'Mầm Cây Thần', growDuration: 240, seedPrice: 2500, sellPrice: 9000, expReward: 1000, icon: '🍎', seedIcon: '🌟', levelRequired: 10 },
+  { id: 'watermelon', name: 'Dưa Hấu Đỏ', seedName: 'Hạt Dưa Hấu', growDuration: 600, seedPrice: 550, sellPrice: 1900, expReward: 250, icon: '🍉', seedIcon: '🌱', levelRequired: 6 },
+  { id: 'dragonfruit', name: 'Thanh Long Ruột Đỏ', seedName: 'Nhánh Thanh Long', growDuration: 750, seedPrice: 700, sellPrice: 2500, expReward: 320, icon: '🐉', seedIcon: '🌱', levelRequired: 7 },
+  { id: 'grape', name: 'Nho Tím Ninh Thuận', seedName: 'Giống Nho Tím', growDuration: 900, seedPrice: 900, sellPrice: 3200, expReward: 400, icon: '🍇', seedIcon: '🌱', levelRequired: 8 },
+  { id: 'strawberry', name: 'Dâu Tây Hoàng Gia', seedName: 'Hạt Dâu Tây Vàng', growDuration: 1200, seedPrice: 1200, sellPrice: 4500, expReward: 550, icon: '🍓', seedIcon: '✨', levelRequired: 9 },
+  { id: 'golden_apple', name: 'Táo Vàng Thần Thoại', seedName: 'Mầm Cây Thần', growDuration: 1800, seedPrice: 2500, sellPrice: 10000, expReward: 1000, icon: '🍎', seedIcon: '🌟', levelRequired: 10 },
 ];
 
 export const ALL_FISH = [
@@ -66,6 +66,8 @@ export const ALL_BAITS = [
 ];
 
 export const ALL_CONSUMABLES = [
+  { id: 'feed_chicken', name: 'Thóc Cám Cho Gà', energyRestore: 0, priceXu: 20, icon: '🌾', description: 'Thức ăn giúp gà đẻ trứng sau 60s' },
+  { id: 'feed_pig', name: 'Cám Heo Đậm Đặc', energyRestore: 0, priceXu: 50, icon: '🥣', description: 'Thức ăn giúp heo mau lớn sau 150s' },
   { id: 'drink_lemon', name: 'Trà Chanh Vỉa Hè', energyRestore: 25, priceXu: 150, icon: '🍋', description: 'Hồi phục +25 Thể Lực' },
   { id: 'drink_coffee', name: 'Cà Phê Phin Sữa Đá', energyRestore: 60, priceXu: 350, icon: '☕', description: 'Hồi phục +60 Thể Lực' },
   { id: 'drink_energy', name: 'Nước Tăng Lực Bò Húc', energyRestore: 120, priceXu: 700, icon: '⚡', description: 'Hồi phục đầy 100% Thể Lực' },
@@ -421,4 +423,231 @@ export function handleBuyVehicle(userId, vehicleId) {
   });
 
   return { success: true, user: getUserById(userId), message: `Chúc mừng bạn đã sở hữu ${vehDef.name}!` };
+}
+
+/**
+ * Mua Con Giống Chăn Nuôi (Gà con, Heo con)
+ */
+export function handleBuyAnimal(userId, animalType) {
+  const user = getUserById(userId);
+  if (!user) return { success: false, error: 'Không tìm thấy người chơi.' };
+
+  const chickens = user.chickens || [];
+  const pigs = user.pigs || [];
+
+  if (animalType === 'chicken') {
+    if (chickens.length >= 4) {
+      return { success: false, error: 'Chuồng gà đã đầy (tối đa 4 con)!' };
+    }
+    const cost = 300;
+    if (user.xu < cost) {
+      return { success: false, error: `Bạn cần ${cost} Xu để mua Gà con.` };
+    }
+
+    updateUserBalance(userId, -cost, 0);
+    const newChicken = {
+      id: Date.now(),
+      fed: false,
+      eggsReady: false,
+      fedAt: 0,
+      readyAt: 0
+    };
+    chickens.push(newChicken);
+    saveUserProfile(userId, { chickens });
+    return { success: true, user: getUserById(userId), message: 'Mua thành công 1 Gà con vào chuồng!' };
+  } else if (animalType === 'pig') {
+    if (pigs.length >= 4) {
+      return { success: false, error: 'Chuồng heo đã đầy (tối đa 4 con)!' };
+    }
+    const cost = 1200;
+    if (user.xu < cost) {
+      return { success: false, error: `Bạn cần ${cost} Xu để mua Heo con.` };
+    }
+
+    updateUserBalance(userId, -cost, 0);
+    const newPig = {
+      id: Date.now(),
+      fed: false,
+      productReady: false,
+      fedAt: 0,
+      readyAt: 0
+    };
+    pigs.push(newPig);
+    saveUserProfile(userId, { pigs });
+    return { success: true, user: getUserById(userId), message: 'Mua thành công 1 Heo con vào chuồng!' };
+  }
+
+  return { success: false, error: 'Loại con giống không hợp lệ.' };
+}
+
+/**
+ * Cho Vật Nuôi Ăn (Gà: 60s đẻ trứng, Heo: 150s lớn)
+ */
+export function handleFeedAnimal(userId, animalType, animalId) {
+  const user = getUserById(userId);
+  if (!user) return { success: false, error: 'Không tìm thấy người chơi.' };
+
+  const inventory = [...user.inventory];
+
+  if (animalType === 'chicken') {
+    const chickens = user.chickens || [];
+    const chicken = chickens.find(c => c.id === animalId);
+    if (!chicken) return { success: false, error: 'Không tìm thấy con gà này.' };
+    if (chicken.fed) return { success: false, error: 'Gà đang no và đang tiêu hóa thức ăn!' };
+
+    // Kiểm tra có cám gà không
+    const feedItem = inventory.find(i => i.id === 'feed_chicken' && i.count > 0);
+    if (!feedItem) {
+      if (user.xu < 20) {
+        return { success: false, error: 'Bạn không có Thóc Cho Gà và không đủ 20 Xu để mua!' };
+      }
+      updateUserBalance(userId, -20, 0);
+    } else {
+      feedItem.count -= 1;
+      if (feedItem.count <= 0) {
+        const idx = inventory.findIndex(i => i.id === 'feed_chicken');
+        if (idx !== -1) inventory.splice(idx, 1);
+      }
+    }
+
+    const now = Date.now();
+    chicken.fed = true;
+    chicken.fedAt = now;
+    chicken.readyAt = now + 60000; // 60s
+    chicken.eggsReady = false;
+
+    saveUserProfile(userId, { chickens, inventory });
+    return { success: true, user: getUserById(userId), message: 'Đã rắc thóc cho gà! Gà sẽ đẻ trứng sau 60 giây.' };
+
+  } else if (animalType === 'pig') {
+    const pigs = user.pigs || [];
+    const pig = pigs.find(p => p.id === animalId);
+    if (!pig) return { success: false, error: 'Không tìm thấy con heo này.' };
+    if (pig.fed) return { success: false, error: 'Heo đang no và đang lớn!' };
+
+    // Kiểm tra có cám heo không
+    const feedItem = inventory.find(i => i.id === 'feed_pig' && i.count > 0);
+    if (!feedItem) {
+      if (user.xu < 50) {
+        return { success: false, error: 'Bạn không có Cám Heo và không đủ 50 Xu để mua!' };
+      }
+      updateUserBalance(userId, -50, 0);
+    } else {
+      feedItem.count -= 1;
+      if (feedItem.count <= 0) {
+        const idx = inventory.findIndex(i => i.id === 'feed_pig');
+        if (idx !== -1) inventory.splice(idx, 1);
+      }
+    }
+
+    const now = Date.now();
+    pig.fed = true;
+    pig.fedAt = now;
+    pig.readyAt = now + 150000; // 150s (2.5 phút)
+    pig.productReady = false;
+
+    saveUserProfile(userId, { pigs, inventory });
+    return { success: true, user: getUserById(userId), message: 'Đã đổ máng cám cho heo! Heo sẽ lớn sau 2.5 phút.' };
+  }
+
+  return { success: false, error: 'Loại vật nuôi không hợp lệ.' };
+}
+
+/**
+ * Thu Hoạch Sản Phẩm Chăn Nuôi (Trứng Gà, Thịt Heo)
+ */
+export function handleCollectAnimalProduct(userId, animalType, animalId) {
+  const user = getUserById(userId);
+  if (!user) return { success: false, error: 'Không tìm thấy người chơi.' };
+
+  const inventory = [...user.inventory];
+
+  if (animalType === 'chicken') {
+    const chickens = user.chickens || [];
+    const chicken = chickens.find(c => c.id === animalId);
+    if (!chicken) return { success: false, error: 'Không tìm thấy gà.' };
+
+    const isReady = chicken.fed && (chicken.eggsReady || (chicken.readyAt && Date.now() >= chicken.readyAt));
+    if (!isReady) {
+      const remainingSec = chicken.readyAt ? Math.max(0, Math.ceil((chicken.readyAt - Date.now()) / 1000)) : 60;
+      return { success: false, error: `Gà chưa đẻ trứng! Còn lại ${remainingSec}s.` };
+    }
+
+    // Tỷ lệ 15% ra trứng vàng
+    const isGolden = Math.random() < 0.15;
+    const targetId = isGolden ? 'egg_golden' : 'egg_fresh';
+    const targetName = isGolden ? 'Trứng Gà Vàng Quý Tộc' : 'Trứng Gà Tươi';
+    const sellPrice = isGolden ? 250 : 85;
+    const expReward = isGolden ? 45 : 15;
+    const icon = isGolden ? '🌟' : '🥚';
+
+    const existing = inventory.find(i => i.id === targetId);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      inventory.push({
+        id: targetId,
+        name: targetName,
+        type: 'egg',
+        count: 1,
+        sellPrice,
+        icon,
+        description: `Trứng gà thơm ngon từ chuồng trại, bán được ${sellPrice} Xu.`
+      });
+    }
+
+    chicken.fed = false;
+    chicken.eggsReady = false;
+    chicken.fedAt = 0;
+    chicken.readyAt = 0;
+
+    const newExp = user.exp + expReward;
+    saveUserProfile(userId, { chickens, inventory, exp: newExp });
+    updateQuestProgress(userId, 'chicken', 1);
+
+    return { success: true, user: getUserById(userId), message: `Nhặt được 1x ${targetName}! (+${expReward} EXP)` };
+
+  } else if (animalType === 'pig') {
+    const pigs = user.pigs || [];
+    const pig = pigs.find(p => p.id === animalId);
+    if (!pig) return { success: false, error: 'Không tìm thấy heo.' };
+
+    const isReady = pig.fed && (pig.productReady || (pig.readyAt && Date.now() >= pig.readyAt));
+    if (!isReady) {
+      const remainingSec = pig.readyAt ? Math.max(0, Math.ceil((pig.readyAt - Date.now()) / 1000)) : 150;
+      return { success: false, error: `Heo chưa lớn! Còn lại ${remainingSec}s.` };
+    }
+
+    const targetId = 'pork_fresh';
+    const targetName = 'Thịt Heo Tươi Sạch';
+    const sellPrice = 350;
+    const expReward = 40;
+
+    const existing = inventory.find(i => i.id === targetId);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      inventory.push({
+        id: targetId,
+        name: targetName,
+        type: 'crop',
+        count: 1,
+        sellPrice,
+        icon: '🥩',
+        description: `Thịt heo chất lượng cao xuất chuồng, bán được ${sellPrice} Xu.`
+      });
+    }
+
+    pig.fed = false;
+    pig.productReady = false;
+    pig.fedAt = 0;
+    pig.readyAt = 0;
+
+    const newExp = user.exp + expReward;
+    saveUserProfile(userId, { pigs, inventory, exp: newExp });
+
+    return { success: true, user: getUserById(userId), message: `Thu hoạch thành công 1x ${targetName}! (+${expReward} EXP)` };
+  }
+
+  return { success: false, error: 'Loại vật nuôi không hợp lệ.' };
 }

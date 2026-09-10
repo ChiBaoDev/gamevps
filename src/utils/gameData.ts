@@ -2,23 +2,23 @@ import { CropDefinition, FishDefinition, FishingRod, BaitDefinition, DailyQuest,
 
 export const CROPS: CropDefinition[] = [
   // Cây ngắn ngày
-  { id: 'rice', name: 'Lúa Nước', seedName: 'Hạt Giống Lúa', growDuration: 12, seedPrice: 20, sellPrice: 50, expReward: 10, icon: '🌾', seedIcon: '🌱', description: 'Đặc sản đồng quê Avatar lớn nhanh.', levelRequired: 1 },
-  { id: 'carrot', name: 'Cà Rốt Đỏ', seedName: 'Hạt Cà Rốt', growDuration: 20, seedPrice: 45, sellPrice: 115, expReward: 20, icon: '🥕', seedIcon: '🌱', description: 'Cà rốt giòn ngọt giàu dinh dưỡng.', levelRequired: 1 },
-  { id: 'corn', name: 'Bắp Ngô Vàng', seedName: 'Hạt Bắp Ngô', growDuration: 28, seedPrice: 65, sellPrice: 170, expReward: 30, icon: '🌽', seedIcon: '🌱', description: 'Bắp ngô vàng óng ả.', levelRequired: 2 },
-  { id: 'tomato', name: 'Cà Chua Bi', seedName: 'Hạt Cà Chua', growDuration: 35, seedPrice: 85, sellPrice: 230, expReward: 40, icon: '🍅', seedIcon: '🌱', description: 'Chùm cà chua mọng nước.', levelRequired: 2 },
-  { id: 'potato', name: 'Khoai Lang Mật', seedName: 'Củ Khoai Giống', growDuration: 45, seedPrice: 110, sellPrice: 300, expReward: 50, icon: '🥔', seedIcon: '🌱', description: 'Khoai lang dẻo thơm.', levelRequired: 3 },
+  { id: 'rice', name: 'Lúa Nước', seedName: 'Hạt Giống Lúa', growDuration: 30, seedPrice: 20, sellPrice: 55, expReward: 10, icon: '🌾', seedIcon: '🌱', description: 'Đặc sản đồng quê Avatar lớn trong 30s.', levelRequired: 1 },
+  { id: 'carrot', name: 'Cà Rốt Đỏ', seedName: 'Hạt Cà Rốt', growDuration: 60, seedPrice: 45, sellPrice: 120, expReward: 20, icon: '🥕', seedIcon: '🌱', description: 'Cà rốt giòn ngọt lớn trong 1 phút.', levelRequired: 1 },
+  { id: 'corn', name: 'Bắp Ngô Vàng', seedName: 'Hạt Bắp Ngô', growDuration: 90, seedPrice: 65, sellPrice: 180, expReward: 30, icon: '🌽', seedIcon: '🌱', description: 'Bắp ngô vàng óng ả lớn trong 1.5 phút.', levelRequired: 2 },
+  { id: 'tomato', name: 'Cà Chua Bi', seedName: 'Hạt Cà Chua', growDuration: 120, seedPrice: 85, sellPrice: 240, expReward: 40, icon: '🍅', seedIcon: '🌱', description: 'Chùm cà chua mọng nước lớn trong 2 phút.', levelRequired: 2 },
+  { id: 'potato', name: 'Khoai Lang Mật', seedName: 'Củ Khoai Giống', growDuration: 150, seedPrice: 110, sellPrice: 320, expReward: 50, icon: '🥔', seedIcon: '🌱', description: 'Khoai lang dẻo thơm lớn trong 2.5 phút.', levelRequired: 3 },
   // Hoa cảnh
-  { id: 'marigold', name: 'Hoa Cúc Vàng', seedName: 'Hạt Cúc Vàng', growDuration: 55, seedPrice: 140, sellPrice: 390, expReward: 65, icon: '🌼', seedIcon: '🌱', description: 'Bông cúc vàng rực rỡ.', levelRequired: 3 },
-  { id: 'rose', name: 'Hoa Hồng Đỏ', seedName: 'Hạt Hoa Hồng', growDuration: 65, seedPrice: 180, sellPrice: 520, expReward: 85, icon: '🌹', seedIcon: '🌱', description: 'Bông hồng kiêu sa lãng mạn.', levelRequired: 4 },
-  { id: 'sunflower', name: 'Hoa Hướng Dương', seedName: 'Hạt Hướng Dương', growDuration: 75, seedPrice: 230, sellPrice: 680, expReward: 110, icon: '🌻', seedIcon: '🌱', description: 'Hoa hướng dương luôn hướng về ánh mặt trời.', levelRequired: 4 },
-  { id: 'lotus', name: 'Hoa Sen Ngọc', seedName: 'Củ Sen Ngọc', growDuration: 90, seedPrice: 320, sellPrice: 960, expReward: 150, icon: '🪷', seedIcon: '✨', description: 'Quốc hoa ngát hương thanh khiết.', levelRequired: 5 },
-  { id: 'orchid', name: 'Hoa Lan Quý Tộc', seedName: 'Mầm Lan Rừng', growDuration: 110, seedPrice: 450, sellPrice: 1400, expReward: 200, icon: '🌸', seedIcon: '✨', description: 'Hoa lan rừng quý hiếm giá trị cao.', levelRequired: 6 },
+  { id: 'marigold', name: 'Hoa Cúc Vàng', seedName: 'Hạt Cúc Vàng', growDuration: 180, seedPrice: 140, sellPrice: 420, expReward: 65, icon: '🌼', seedIcon: '🌱', description: 'Bông cúc vàng rực rỡ nở sau 3 phút.', levelRequired: 3 },
+  { id: 'rose', name: 'Hoa Hồng Đỏ', seedName: 'Hạt Hoa Hồng', growDuration: 240, seedPrice: 180, sellPrice: 560, expReward: 85, icon: '🌹', seedIcon: '🌱', description: 'Bông hồng kiêu sa nở sau 4 phút.', levelRequired: 4 },
+  { id: 'sunflower', name: 'Hoa Hướng Dương', seedName: 'Hạt Hướng Dương', growDuration: 300, seedPrice: 230, sellPrice: 720, expReward: 110, icon: '🌻', seedIcon: '🌱', description: 'Hoa hướng dương khoe sắc sau 5 phút.', levelRequired: 4 },
+  { id: 'lotus', name: 'Hoa Sen Ngọc', seedName: 'Củ Sen Ngọc', growDuration: 360, seedPrice: 320, sellPrice: 1000, expReward: 150, icon: '🪷', seedIcon: '✨', description: 'Quốc hoa ngát hương nở sau 6 phút.', levelRequired: 5 },
+  { id: 'orchid', name: 'Hoa Lan Quý Tộc', seedName: 'Mầm Lan Rừng', growDuration: 450, seedPrice: 450, sellPrice: 1500, expReward: 200, icon: '🌸', seedIcon: '✨', description: 'Hoa lan rừng quý hiếm nở sau 7.5 phút.', levelRequired: 6 },
   // Trái cây cao cấp
-  { id: 'watermelon', name: 'Dưa Hấu Đỏ', seedName: 'Hạt Dưa Hấu', growDuration: 120, seedPrice: 550, sellPrice: 1800, expReward: 250, icon: '🍉', seedIcon: '🌱', description: 'Trái dưa hấu đỏ mát lành mùa hè.', levelRequired: 6 },
-  { id: 'dragonfruit', name: 'Thanh Long Ruột Đỏ', seedName: 'Nhánh Thanh Long', growDuration: 140, seedPrice: 700, sellPrice: 2300, expReward: 320, icon: '🐉', seedIcon: '🌱', description: 'Thanh long ngọt lịm sai quả.', levelRequired: 7 },
-  { id: 'grape', name: 'Nho Tím Ninh Thuận', seedName: 'Giống Nho Tím', growDuration: 160, seedPrice: 900, sellPrice: 3000, expReward: 400, icon: '🍇', seedIcon: '🌱', description: 'Chùm nho mọng nước trĩu cành.', levelRequired: 8 },
-  { id: 'strawberry', name: 'Dâu Tây Hoàng Gia', seedName: 'Hạt Dâu Vàng', growDuration: 180, seedPrice: 1200, sellPrice: 4200, expReward: 550, icon: '🍓', seedIcon: '✨', description: 'Dâu tây hoàng gia lợi nhuận cực khủng.', levelRequired: 9 },
-  { id: 'golden_apple', name: 'Táo Vàng Thần Thoại', seedName: 'Mầm Cây Thần', growDuration: 240, seedPrice: 2500, sellPrice: 9000, expReward: 1000, icon: '🍎', seedIcon: '🌟', description: 'Trái cây thần tích đem lại gia tài lớn.', levelRequired: 10 },
+  { id: 'watermelon', name: 'Dưa Hấu Đỏ', seedName: 'Hạt Dưa Hấu', growDuration: 600, seedPrice: 550, sellPrice: 1900, expReward: 250, icon: '🍉', seedIcon: '🌱', description: 'Trái dưa hấu đỏ chín mọng sau 10 phút.', levelRequired: 6 },
+  { id: 'dragonfruit', name: 'Thanh Long Ruột Đỏ', seedName: 'Nhánh Thanh Long', growDuration: 750, seedPrice: 700, sellPrice: 2500, expReward: 320, icon: '🐉', seedIcon: '🌱', description: 'Thanh long ngọt lịm thu hoạch sau 12.5 phút.', levelRequired: 7 },
+  { id: 'grape', name: 'Nho Tím Ninh Thuận', seedName: 'Giống Nho Tím', growDuration: 900, seedPrice: 900, sellPrice: 3200, expReward: 400, icon: '🍇', seedIcon: '🌱', description: 'Chùm nho mọng nước chín sau 15 phút.', levelRequired: 8 },
+  { id: 'strawberry', name: 'Dâu Tây Hoàng Gia', seedName: 'Hạt Dâu Vàng', growDuration: 1200, seedPrice: 1200, sellPrice: 4500, expReward: 550, icon: '🍓', seedIcon: '✨', description: 'Dâu tây hoàng gia thu hoạch sau 20 phút.', levelRequired: 9 },
+  { id: 'golden_apple', name: 'Táo Vàng Thần Thoại', seedName: 'Mầm Cây Thần', growDuration: 1800, seedPrice: 2500, sellPrice: 10000, expReward: 1000, icon: '🍎', seedIcon: '🌟', description: 'Trái cây thần tích chín sau 30 phút.', levelRequired: 10 },
 ];
 
 export const FISH_SPECIES: FishDefinition[] = [
@@ -69,6 +69,8 @@ export const FASHION_SHOP_ITEMS = [
 ];
 
 export const ALL_CONSUMABLES = [
+  { id: 'feed_chicken', name: 'Thóc Cám Cho Gà', energyRestore: 0, priceXu: 20, icon: '🌾', description: 'Thức ăn giúp gà đẻ trứng sau 60s' },
+  { id: 'feed_pig', name: 'Cám Heo Đậm Đặc', energyRestore: 0, priceXu: 50, icon: '🥣', description: 'Thức ăn giúp heo mau lớn sau 150s' },
   { id: 'drink_lemon', name: 'Trà Chanh Vỉa Hè', energyRestore: 25, priceXu: 150, icon: '🍋', description: 'Hồi phục +25 Thể Lực' },
   { id: 'drink_coffee', name: 'Cà Phê Phin Sữa Đá', energyRestore: 60, priceXu: 350, icon: '☕', description: 'Hồi phục +60 Thể Lực' },
   { id: 'drink_energy', name: 'Nước Tăng Lực Bò Húc', energyRestore: 120, priceXu: 700, icon: '⚡', description: 'Hồi phục đầy 100% Thể Lực' },
@@ -95,11 +97,10 @@ export const ALL_VEHICLES = [
 ];
 
 export const INITIAL_PLOTS: SoilPlot[] = Array.from({ length: 6 }, (_, i) => ({
-
   id: i + 1,
-  cropId: i < 2 ? 'rice' : null,
-  plantedAt: i < 2 ? Date.now() - 6000 : null,
-  watered: i < 2,
+  cropId: null,
+  plantedAt: null,
+  watered: false,
   hasPest: false,
   fertilized: false,
 }));
@@ -141,10 +142,8 @@ export const DEFAULT_USER: UserProfile = {
     glasses: 'black',
   },
   farmPlots: INITIAL_PLOTS,
-  chickens: [
-    { id: 1, fed: false, eggsReady: false, fedAt: 0 },
-    { id: 2, fed: false, eggsReady: false, fedAt: 0 }
-  ],
+  chickens: [],
+  pigs: [],
   inventory: [
     { id: 'seed_rice', name: 'Hạt Giống Lúa', type: 'seed', count: 10, sellPrice: 8, icon: '🌱', description: 'Gieo hạt trồng lúa nước' },
     { id: 'bait_worm', name: 'Giun Đất Tươi', type: 'bait', count: 10, sellPrice: 5, icon: '🪱', description: 'Mồi câu cá rô cá chép' },

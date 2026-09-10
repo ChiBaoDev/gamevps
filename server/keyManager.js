@@ -19,7 +19,7 @@ const DEFAULT_APPEARANCE = {
 };
 
 const DEFAULT_FARM_PLOTS = Array.from({ length: 6 }, (_, index) => ({
-  id: index,
+  id: index + 1,
   cropId: null,
   plantedAt: null,
   watered: false,
@@ -27,10 +27,8 @@ const DEFAULT_FARM_PLOTS = Array.from({ length: 6 }, (_, index) => ({
   fertilized: false,
 }));
 
-const DEFAULT_CHICKENS = [
-  { id: 1, fed: false, eggsReady: false, fedAt: 0 },
-  { id: 2, fed: false, eggsReady: false, fedAt: 0 },
-];
+const DEFAULT_CHICKENS = [];
+const DEFAULT_PIGS = [];
 
 /**
  * Đăng nhập bằng mã Key được cấp trong Database
@@ -199,7 +197,16 @@ export function saveUserProfile(userId, updates) {
   const housesJson = updates.houses ? JSON.stringify(updates.houses) : currentUser.houses_json;
   const vehiclesJson = updates.vehicles ? JSON.stringify(updates.vehicles) : currentUser.vehicles_json;
   const questsJson = updates.quests ? JSON.stringify(updates.quests) : currentUser.quests_json;
-  const statsJson = updates.stats ? JSON.stringify(updates.stats) : currentUser.stats_json;
+
+  let currentStats = {};
+  try { currentStats = JSON.parse(currentUser.stats_json || '{}'); } catch {}
+  if (updates.pigs !== undefined) {
+    currentStats.pigs = updates.pigs;
+  }
+  if (updates.stats) {
+    currentStats = { ...currentStats, ...updates.stats };
+  }
+  const statsJson = JSON.stringify(currentStats);
 
   db.prepare(`
     UPDATE users SET
@@ -323,6 +330,7 @@ function formatUserProfile(record) {
   let appearance = DEFAULT_APPEARANCE;
   let farmPlots = DEFAULT_FARM_PLOTS;
   let chickens = DEFAULT_CHICKENS;
+  let pigs = DEFAULT_PIGS;
   let inventory = [];
   let houses = ['house_leaf'];
   let vehicles = [];
@@ -336,7 +344,13 @@ function formatUserProfile(record) {
   try { houses = JSON.parse(record.houses_json); } catch {}
   try { vehicles = JSON.parse(record.vehicles_json); } catch {}
   try { quests = JSON.parse(record.quests_json); } catch {}
-  try { stats = JSON.parse(record.stats_json); } catch {}
+  try { 
+    if (record.stats_json) {
+      const parsedStats = JSON.parse(record.stats_json);
+      if (parsedStats.pigs) pigs = parsedStats.pigs;
+      stats = parsedStats;
+    }
+  } catch {}
 
   return {
     id: record.id,
@@ -357,6 +371,7 @@ function formatUserProfile(record) {
     appearance,
     farmPlots,
     chickens,
+    pigs,
     inventory,
     houses,
     vehicles,

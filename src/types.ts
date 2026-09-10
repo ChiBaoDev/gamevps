@@ -118,7 +118,8 @@ export interface UserProfile {
   equippedVehicleId?: string;
   appearance: AvatarAppearance;
   farmPlots: SoilPlot[];
-  chickens: { id: number; fed: boolean; eggsReady: boolean; fedAt: number }[];
+  chickens: { id: number; fed: boolean; eggsReady: boolean; fedAt: number; readyAt?: number }[];
+  pigs?: { id: number; fed: boolean; productReady: boolean; fedAt: number; readyAt?: number }[];
   inventory: InventoryItem[];
   houses?: string[];
   vehicles?: string[];

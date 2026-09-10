@@ -8,12 +8,13 @@ import {
   Sparkles, 
   Bug, 
   Clock, 
-  Shovel, 
   Egg, 
   Wheat, 
   PlusCircle,
   TrendingUp,
-  CheckCircle2
+  Flame,
+  ShoppingBag,
+  Heart
 } from 'lucide-react';
 import { CharacterSprite } from './CharacterSprite';
 
@@ -32,14 +33,23 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
   const [showSeedModal, setShowSeedModal] = useState(false);
   const [, setNow] = useState(Date.now());
   const [activeAction, setActiveAction] = useState<'idle' | 'watering' | 'harvesting'>('idle');
+  const [animalTab, setAnimalTab] = useState<'chicken' | 'pig'>('chicken');
 
-  // Timer to update crop growth in real-time
+  // Timer to update crop & animal growth in real-time
   useEffect(() => {
     const timer = setInterval(() => {
       setNow(Date.now());
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Format seconds to human readable string: "45s" or "2m 30s"
+  const formatTimeLeft = (seconds: number) => {
+    if (seconds < 60) return `${seconds}s`;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}p ${secs > 0 ? `${secs}s` : ''}`;
+  };
 
   // Helper to get crop definition
   const getCropDef = (cropId: string | null): CropDefinition | undefined => {
@@ -70,12 +80,12 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
     if (!selectedPlot) return;
     // Check if user has seed in inventory or enough Xu to buy
     const seedInventoryItem = user.inventory.find(
-      (item) => item.type === 'seed' && (item.id === `${crop.id}_seed` || item.id === crop.id) && item.count > 0
+      (item) => item.type === 'seed' && (item.id === `seed_${crop.id}` || item.id === `${crop.id}_seed` || item.id === crop.id) && item.count > 0
     );
 
     if (!seedInventoryItem && user.xu < crop.seedPrice) {
       sounds.playClick();
-      onShowMessage(`Ban khong co hat giong va khong du ${crop.seedPrice} Xu de gieo!`);
+      onShowMessage(`❌ Bạn không có hạt giống và không đủ ${crop.seedPrice} Xu để gieo!`);
       return;
     }
 
@@ -116,7 +126,7 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
 
     setShowSeedModal(false);
     setSelectedPlot(null);
-    onShowMessage(`Da gieo ${crop.name}! Hay cham soc tuoi nuoc cho cay mau lon.`);
+    onShowMessage(`🌱 Đã gieo ${crop.name} (thời gian chín: ${formatTimeLeft(crop.growDuration)})!`);
   };
 
   // Action: Water a plot
@@ -137,7 +147,7 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
       energy: Math.max(0, user.energy - 1),
       exp: user.exp + 2,
     });
-    onShowMessage('Da tuoi nuoc mat cho cay! Cay dang xanh tuoi tro lai.');
+    onShowMessage('💧 Đã tưới nước mát cho cây!');
   };
 
   // Action: Remove pest from plot
@@ -154,27 +164,27 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
       farmPlots: updatedPlots,
       exp: user.exp + 5,
     });
-    onShowMessage('Da bat sach sau bo hai cay! Nhan duoc +5 EXP.');
+    onShowMessage('🐛 Đã bắt sạch sâu bọ hại cây! Nhận +5 EXP.');
   };
 
   // Action: Fertilize plot
   const handleFertilizePlot = (plotId: number) => {
-    const fertItem = user.inventory.find((item) => item.id === 'fertilizer' && item.count > 0);
+    const fertItem = user.inventory.find((item) => (item.id === 'fertilizer' || item.id === 'fert_organic' || item.id === 'fert_bio') && item.count > 0);
     if (!fertItem) {
-      onShowMessage('Ban khong co phan bon trong ruong do! Hay ghe Cua Hang mua nhe.');
+      onShowMessage('❌ Bạn không có phân bón trong túi đồ!');
       return;
     }
 
     sounds.playHarvest();
     const updatedPlots = user.farmPlots.map((p) => {
       if (p.id === plotId) {
-        return { ...p, fertilized: true, plantedAt: (p.plantedAt || Date.now()) - 10000 };
+        return { ...p, fertilized: true, plantedAt: (p.plantedAt || Date.now()) - 20000 };
       }
       return p;
     });
 
     const updatedInv = user.inventory.map((item) => {
-      if (item.id === 'fertilizer') {
+      if (item.id === fertItem.id) {
         return { ...item, count: item.count - 1 };
       }
       return item;
@@ -184,7 +194,7 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
       farmPlots: updatedPlots,
       inventory: updatedInv,
     });
-    onShowMessage('Da bon phan kich thich! Thoi gian thu hoach duoc rut ngan 50%.');
+    onShowMessage('✨ Đã bón phân kích thích! Thời gian thu hoạch được rút ngắn.');
   };
 
   // Action: Harvest crop
@@ -206,9 +216,7 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
         origin: { y: 0.65 },
         colors: ['#facc15', '#22c55e', '#ef4444', '#3b82f6'],
       });
-    } catch {
-      // Ignored if blocked
-    }
+    } catch {}
 
     const updatedPlots = user.farmPlots.map((p) => {
       if (p.id === plotId) {
@@ -225,19 +233,19 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
     });
 
     // Add harvested crop to inventory
-    const existingCropIndex = user.inventory.findIndex((item) => item.id === `crop_${crop.id}`);
+    const existingCropIndex = user.inventory.findIndex((item) => item.id === crop.id || item.id === `crop_${crop.id}`);
     let updatedInventory = [...user.inventory];
     if (existingCropIndex >= 0) {
       updatedInventory[existingCropIndex].count += 1;
     } else {
       updatedInventory.push({
-        id: `crop_${crop.id}`,
+        id: crop.id,
         name: crop.name,
         type: 'crop',
         count: 1,
         sellPrice: crop.sellPrice,
         icon: crop.icon,
-        description: `Nong san tuoi ngon thu hoach tu canh dong, ban duoc ${crop.sellPrice} Xu.`,
+        description: `Nông sản tươi ngon thu hoạch từ nông trại, bán được ${crop.sellPrice} Xu.`,
       });
     }
 
@@ -260,11 +268,11 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
       newLevel += 1;
       newExp -= user.maxExp;
       newMaxExp = Math.round(newMaxExp * 1.5);
-      newLuong += 2; // reward 2 luong
+      newLuong += 2;
       sounds.playLevelUp();
-      onShowMessage(`🎉 CHUC MUNG! Ban da thang len Cap ${newLevel}! Nhan thuong 2 LUONG.`);
+      onShowMessage(`🎉 CHÚC MỪNG! Bạn đã thăng lên Cấp ${newLevel}! Nhận thưởng 2 LƯỢNG.`);
     } else {
-      onShowMessage(`🌾 Thu hoach thanh cong 1 ${crop.name}! Nhan +${crop.expReward} EXP (da cat vao Ruong do).`);
+      onShowMessage(`🌾 Thu hoạch thành công 1x ${crop.name}! (+${crop.expReward} EXP, giá bán ${crop.sellPrice} Xu).`);
     }
 
     onUpdateUser({
@@ -295,18 +303,18 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
         totalHarvested++;
         totalExpEarned += status.crop.expReward;
 
-        const existingCropIdx = updatedInventory.findIndex((i) => i.id === `crop_${status.crop!.id}`);
+        const existingCropIdx = updatedInventory.findIndex((i) => i.id === status.crop!.id || i.id === `crop_${status.crop!.id}`);
         if (existingCropIdx >= 0) {
           updatedInventory[existingCropIdx].count += 1;
         } else {
           updatedInventory.push({
-            id: `crop_${status.crop!.id}`,
+            id: status.crop!.id,
             name: status.crop!.name,
             type: 'crop',
             count: 1,
             sellPrice: status.crop!.sellPrice,
             icon: status.crop!.icon,
-            description: `Nong san tuoi ngon thu hoach tu canh dong, ban duoc ${status.crop!.sellPrice} Xu.`,
+            description: `Nông sản tươi ngon thu hoạch từ nông trại, bán được ${status.crop!.sellPrice} Xu.`,
           });
         }
 
@@ -319,16 +327,14 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
     });
 
     if (totalHarvested === 0) {
-      onShowMessage('Chua co cay nao chin de thu hoach ca!');
+      onShowMessage('Chưa có cây nào chín để thu hoạch!');
       return;
     }
 
     sounds.playCatchSuccess();
     try {
       confetti({ particleCount: 50, spread: 70, origin: { y: 0.6 } });
-    } catch {
-      // Ignored
-    }
+    } catch {}
 
     onUpdateUser({
       farmPlots: updatedPlots,
@@ -339,68 +345,136 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
         cropsHarvested: user.stats.cropsHarvested + totalHarvested,
       },
     });
-    onShowMessage(`🌾 Da thu hoach toan bo ${totalHarvested} luong cay! Nhan +${totalExpEarned} EXP.`);
+    onShowMessage(`🌾 Đã gặt toàn bộ ${totalHarvested} luống cây! Nhận +${totalExpEarned} EXP.`);
   };
 
-  // Chicken coop: feed & collect eggs
-  const handleFeedChicken = (chickenId: number) => {
-    sounds.playHarvest();
-    const updatedChickens = user.chickens.map((c) => {
-      if (c.id === chickenId) {
-        return { ...c, fed: true, fedAt: Date.now(), eggsReady: true };
-      }
-      return c;
-    });
-    onUpdateUser({ chickens: updatedChickens });
-    onShowMessage('Da rac thoc cho ga an! Ga vui suong chuan bi de trung vang.');
-  };
+  // ==========================================
+  // CHĂN NUÔI: GÀ 🐔 & HEO 🐷
+  // ==========================================
 
-  const handleCollectEgg = (chickenId: number) => {
-    sounds.playCoin();
-    const updatedChickens = user.chickens.map((c) => {
-      if (c.id === chickenId) {
-        return { ...c, fed: false, eggsReady: false };
-      }
-      return c;
-    });
+  // Mua Con Giống (Gà con: 300 Xu, Heo con: 1200 Xu)
+  const handleBuyAnimal = async (type: 'chicken' | 'pig') => {
+    const cost = type === 'chicken' ? 300 : 1200;
+    const name = type === 'chicken' ? 'Gà Con' : 'Heo Con';
 
-    const existingEggIdx = user.inventory.findIndex((i) => i.id === 'egg_golden');
-    let updatedInv = [...user.inventory];
-    if (existingEggIdx >= 0) {
-      updatedInv[existingEggIdx].count += 1;
-    } else {
-      updatedInv.push({
-        id: 'egg_golden',
-        name: 'Trung Ga Nong Trai',
-        type: 'egg',
-        count: 1,
-        sellPrice: 85,
-        icon: '🥚',
-        description: 'Trung ga tuoi ngon bo duong, dem ban cho lai buon lay 85 Xu.',
-      });
+    if (user.xu < cost) {
+      sounds.playClick();
+      onShowMessage(`❌ Bạn cần ${cost} Xu để mua 1 ${name}!`);
+      return;
     }
 
-    // Update quest
-    const updatedQuests = user.quests.map((q) => {
-      if (q.id === 'quest_chicken') {
-        const newProg = Math.min(q.target, q.progress + 1);
-        return { ...q, progress: newProg, completed: newProg >= q.target };
+    try {
+      const token = localStorage.getItem('game_auth_token') || '';
+      const res = await fetch('/api/game/animals/buy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ animalType: type })
+      });
+      const data = await res.json();
+      if (data.success) {
+        sounds.playCoin();
+        onUpdateUser(data.user);
+        onShowMessage(`🎉 ${data.message}`);
+      } else {
+        onShowMessage(`❌ ${data.error}`);
       }
-      return q;
-    });
-
-    onUpdateUser({
-      chickens: updatedChickens,
-      inventory: updatedInv,
-      quests: updatedQuests,
-      exp: user.exp + 15,
-    });
-    onShowMessage('🥚 Ban da nhat duoc 1 Trung Ga tuoi! +15 EXP (co the ban lay 85 Xu).');
+    } catch {
+      // Fallback local
+      sounds.playCoin();
+      if (type === 'chicken') {
+        const chickens = user.chickens || [];
+        if (chickens.length >= 4) { onShowMessage('Chuồng gà đã đầy (tối đa 4 con)!'); return; }
+        const newChicken = { id: Date.now(), fed: false, eggsReady: false, fedAt: 0, readyAt: 0 };
+        onUpdateUser({ xu: user.xu - cost, chickens: [...chickens, newChicken] });
+      } else {
+        const pigs = user.pigs || [];
+        if (pigs.length >= 4) { onShowMessage('Chuồng heo đã đầy (tối đa 4 con)!'); return; }
+        const newPig = { id: Date.now(), fed: false, productReady: false, fedAt: 0, readyAt: 0 };
+        onUpdateUser({ xu: user.xu - cost, pigs: [...pigs, newPig] });
+      }
+      onShowMessage(`🎉 Mua thành công 1 ${name} vào trang trại!`);
+    }
   };
+
+  // Cho Vật Nuôi Ăn
+  const handleFeedAnimal = async (type: 'chicken' | 'pig', id: number) => {
+    sounds.playHarvest();
+    const cost = type === 'chicken' ? 20 : 50;
+    const duration = type === 'chicken' ? 60 : 150;
+
+    try {
+      const token = localStorage.getItem('game_auth_token') || '';
+      const res = await fetch('/api/game/animals/feed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ animalType: type, animalId: id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        onUpdateUser(data.user);
+        onShowMessage(`🌾 ${data.message}`);
+      } else {
+        onShowMessage(`❌ ${data.error}`);
+      }
+    } catch {
+      // Fallback local
+      const now = Date.now();
+      if (type === 'chicken') {
+        const chickens = (user.chickens || []).map(c => c.id === id ? { ...c, fed: true, fedAt: now, readyAt: now + duration * 1000, eggsReady: false } : c);
+        onUpdateUser({ xu: Math.max(0, user.xu - cost), chickens });
+      } else {
+        const pigs = (user.pigs || []).map(p => p.id === id ? { ...p, fed: true, fedAt: now, readyAt: now + duration * 1000, productReady: false } : p);
+        onUpdateUser({ xu: Math.max(0, user.xu - cost), pigs });
+      }
+      onShowMessage(`🌾 Đã cho ăn! Vật nuôi sẽ cho sản phẩm sau ${formatTimeLeft(duration)}.`);
+    }
+  };
+
+  // Thu Hoạch Sản Phẩm (Trứng, Thịt)
+  const handleCollectProduct = async (type: 'chicken' | 'pig', id: number) => {
+    sounds.playCoin();
+    try {
+      const token = localStorage.getItem('game_auth_token') || '';
+      const res = await fetch('/api/game/animals/collect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ animalType: type, animalId: id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        try { confetti({ particleCount: 40, spread: 60, origin: { y: 0.7 } }); } catch {}
+        onUpdateUser(data.user);
+        onShowMessage(`🎁 ${data.message}`);
+      } else {
+        onShowMessage(`❌ ${data.error}`);
+      }
+    } catch {
+      // Fallback local
+      if (type === 'chicken') {
+        const chickens = (user.chickens || []).map(c => c.id === id ? { ...c, fed: false, eggsReady: false, fedAt: 0, readyAt: 0 } : c);
+        const inv = [...user.inventory];
+        const exist = inv.find(i => i.id === 'egg_fresh');
+        if (exist) exist.count += 1;
+        else inv.push({ id: 'egg_fresh', name: 'Trứng Gà Tươi', type: 'egg', count: 1, sellPrice: 85, icon: '🥚', description: 'Trứng gà tươi ngon bán được 85 Xu.' });
+        onUpdateUser({ chickens, inventory: inv, exp: user.exp + 15 });
+        onShowMessage('🥚 Bạn đã nhặt được 1 Trứng Gà Tươi! (+15 EXP)');
+      } else {
+        const pigs = (user.pigs || []).map(p => p.id === id ? { ...p, fed: false, productReady: false, fedAt: 0, readyAt: 0 } : p);
+        const inv = [...user.inventory];
+        const exist = inv.find(i => i.id === 'pork_fresh');
+        if (exist) exist.count += 1;
+        else inv.push({ id: 'pork_fresh', name: 'Thịt Heo Tươi Sạch', type: 'crop', count: 1, sellPrice: 350, icon: '🥩', description: 'Thịt heo tươi bán được 350 Xu.' });
+        onUpdateUser({ pigs, inventory: inv, exp: user.exp + 40 });
+        onShowMessage('🥩 Bạn đã thu hoạch 1 Thịt Heo Tươi Sạch! (+40 EXP)');
+      }
+    }
+  };
+
+  const chickens = user.chickens || [];
+  const pigs = user.pigs || [];
 
   return (
     <div className="relative min-h-[calc(100vh-140px)] pb-24 pt-4 px-2 sm:px-6">
-      {/* Farm Background Panorama */}
       <div className="max-w-5xl mx-auto">
         {/* Banner Title & Quick Controls */}
         <div className="bg-[#381c10] pixel-box p-3 sm:p-4 mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -408,10 +482,10 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
             <span className="text-3xl sm:text-4xl filter drop-shadow">🌾</span>
             <div>
               <h1 className="text-base sm:text-lg font-black text-amber-200 tracking-wide uppercase font-pixel flex items-center gap-2 pixel-shadow-sm">
-                Nong Trai Avatar
+                Nông Trại & Chuồng Trại Dân Gian
               </h1>
               <p className="text-xs text-amber-300/80 font-vt323 text-sm sm:text-base">
-                Gieo hat, tuoi nuoc, bon phan, thu hoach nong san doi lay Xu vang!
+                Trồng trọt theo thời gian thực, mua con giống nuôi gà đẻ trứng & nuôi heo lấy thịt!
               </p>
             </div>
           </div>
@@ -423,27 +497,27 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
               className="pixel-btn bg-emerald-700 hover:bg-emerald-600 text-white font-pixel text-[10px] px-3 py-2 flex items-center gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
-              <span>Gat Tat Ca</span>
+              <span>Gặt Tất Cả</span>
             </button>
           </div>
         </div>
 
         {/* The Farm Yard Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          {/* Main Soil Field (12 Plots) */}
+          {/* Main Soil Field (6 Plots) */}
           <div className="lg:col-span-3 bg-[#1e3814] pixel-box-green p-4 sm:p-5 relative overflow-hidden">
             {/* Wooden Fence Header Decoration */}
             <div className="flex items-center justify-between border-b-2 border-[#122b0c] pb-2.5 mb-4">
               <div className="flex items-center gap-2 text-emerald-200 font-pixel text-xs">
-                <span>🏡 Vuon Rau Cay Trai (12 Luong)</span>
+                <span>🏡 Vườn Rau Cây Trái (6 Luống)</span>
               </div>
               <div className="text-[9px] font-pixel text-emerald-300 bg-[#0c1f09] px-2 py-1 border border-emerald-700">
-                Cham vao o dat de cham soc
+                Chạm vào ô đất để gieo hạt & chăm sóc
               </div>
             </div>
 
             {/* Grid of Soil Plots */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
               {user.farmPlots.map((plot) => {
                 const status = getPlotStatus(plot);
                 const hasCrop = plot.cropId !== null;
@@ -483,17 +557,17 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
                     {/* Status badges */}
                     <div className="absolute top-1 right-1 flex gap-1">
                       {plot.watered && (
-                        <span className="bg-sky-600 border border-black text-white p-0.5" title="Da tuoi nuoc">
+                        <span className="bg-sky-600 border border-black text-white p-0.5" title="Đã tưới nước">
                           <Droplets className="w-2.5 h-2.5" />
                         </span>
                       )}
                       {plot.fertilized && (
-                        <span className="bg-purple-600 border border-black text-white p-0.5" title="Da bon phan">
+                        <span className="bg-purple-600 border border-black text-white p-0.5" title="Đã bón phân">
                           <Sparkles className="w-2.5 h-2.5" />
                         </span>
                       )}
                       {plot.hasPest && (
-                        <span className="bg-red-600 border border-black text-white p-0.5 animate-bounce" title="Co sau hai!">
+                        <span className="bg-red-600 border border-black text-white p-0.5 animate-bounce" title="Có sâu hại!">
                           <Bug className="w-2.5 h-2.5" />
                         </span>
                       )}
@@ -503,7 +577,7 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
                     {!hasCrop ? (
                       <div className="flex flex-col items-center text-amber-200/80 group-hover:scale-105 transition-transform">
                         <PlusCircle className="w-6 h-6 mb-1 text-yellow-400" />
-                        <span className="font-pixel text-[9px]">Gieo hat</span>
+                        <span className="font-pixel text-[9px]">Gieo hạt</span>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center w-full">
@@ -523,8 +597,8 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
 
                         {/* Progress or Ready state */}
                         {status.mature ? (
-                          <span className="mt-1 bg-yellow-400 border border-black text-black font-pixel text-[8px] px-1.5 py-0.5 uppercase animate-bounce">
-                            GAT!
+                          <span className="mt-1 bg-yellow-400 border border-black text-black font-pixel text-[8px] px-1.5 py-0.5 uppercase animate-bounce font-bold">
+                            GẶT!
                           </span>
                         ) : (
                           <div className="w-full mt-1.5 flex flex-col items-center">
@@ -536,7 +610,7 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
                             </div>
                             <span className="text-[8px] text-amber-300 font-pixel mt-0.5 flex items-center gap-0.5">
                               <Clock className="w-2 h-2" />
-                              {status.timeLeft}s
+                              {formatTimeLeft(status.timeLeft)}
                             </span>
                           </div>
                         )}
@@ -558,103 +632,280 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
                   isWatering={activeAction === 'watering'}
                 />
                 <div className="text-xs text-emerald-200">
-                  <p className="font-pixel text-[9px] text-yellow-300">Trang thai Nong Dan:</p>
+                  <p className="font-pixel text-[9px] text-yellow-300">Trạng thái Nông Dân:</p>
                   <p className="text-emerald-300/90 text-xs font-vt323 text-base">
                     {activeAction === 'watering'
-                      ? 'Dang tuoi nuoc cho cay 💧'
+                      ? 'Đang tưới nước cho cây 💧'
                       : activeAction === 'harvesting'
-                      ? 'Dang gat nong san vang 🌾'
-                      : 'Dang ngam dong lua xanh ngat'}
+                      ? 'Đang gặt nông sản vàng 🌾'
+                      : 'Đang ngắm nông trại xanh ngát'}
                   </p>
                 </div>
               </div>
 
               <div className="text-right text-[9px] font-pixel text-emerald-400/90 hidden sm:block">
-                <span>💡 Bon phan giup cay lon nhanh gap doi!</span>
+                <span>💡 Bón phân giúp rút ngắn 50% thời gian lớn!</span>
               </div>
             </div>
           </div>
 
-          {/* Right Side: Chicken Coop & Farm Merchant */}
+          {/* Right Side: Chuồng Trại Chăn Nuôi (Gà & Heo) */}
           <div className="flex flex-col gap-4">
-            {/* Chuồng Gà Đẻ Trứng */}
+            
+            {/* Box Chuồng Trại Tabs */}
             <div className="bg-[#381c10] pixel-box-wood p-3.5">
+              
+              {/* Tab Selector: Gà 🐔 / Heo 🐷 */}
               <div className="flex items-center justify-between border-b-2 border-[#261208] pb-2 mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">🐔</span>
-                  <span className="font-pixel text-xs text-amber-200">Chuong Ga</span>
-                </div>
-                <span className="bg-[#170a04] text-amber-300 font-pixel text-[8px] px-1.5 py-0.5 border border-amber-700">
-                  2 Ga
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-2.5">
-                {user.chickens.map((chicken, idx) => (
-                  <div
-                    key={chicken.id}
-                    className="bg-[#261309] p-2 pixel-box border-amber-950 flex items-center justify-between"
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => { sounds.playClick(); setAnimalTab('chicken'); }}
+                    className={`pixel-btn px-2 py-1 text-[8.5px] font-pixel transition-all ${
+                      animalTab === 'chicken'
+                        ? 'bg-amber-600 text-white'
+                        : 'bg-[#1e0e06] text-amber-300'
+                    }`}
                   >
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-3xl animate-bounce">
-                        {idx === 0 ? '🐓' : '🐔'}
-                      </span>
-                      <div>
-                        <span className="text-xs font-bold text-amber-100 block">
-                          Ga De #{chicken.id}
-                        </span>
-                        <span className="text-[10px] text-amber-300/70">
-                          {chicken.eggsReady
-                            ? 'Trung vang da san sang!'
-                            : chicken.fed
-                            ? 'Dang ap trung...'
-                            : 'Dang doi bung'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {chicken.eggsReady ? (
-                      <button
-                        onClick={() => handleCollectEgg(chicken.id)}
-                        className="pixel-btn bg-amber-500 hover:bg-amber-400 text-black font-pixel text-[9px] px-2 py-1 flex items-center gap-1"
-                      >
-                        <Egg className="w-3 h-3" />
-                        <span>Nhat trung</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleFeedChicken(chicken.id)}
-                        className="pixel-btn bg-emerald-700 hover:bg-emerald-600 text-white font-pixel text-[9px] px-2 py-1 flex items-center gap-1"
-                      >
-                        <Wheat className="w-3 h-3" />
-                        <span>Cho an</span>
-                      </button>
-                    )}
-                  </div>
-                ))}
+                    🐔 Chuồng Gà ({chickens.length}/4)
+                  </button>
+                  <button
+                    onClick={() => { sounds.playClick(); setAnimalTab('pig'); }}
+                    className={`pixel-btn px-2 py-1 text-[8.5px] font-pixel transition-all ${
+                      animalTab === 'pig'
+                        ? 'bg-rose-700 text-white'
+                        : 'bg-[#1e0e06] text-rose-300'
+                    }`}
+                  >
+                    🐷 Chuồng Heo ({pigs.length}/4)
+                  </button>
+                </div>
               </div>
+
+              {/* PHÂN KHU 1: CHUỒNG GÀ */}
+              {animalTab === 'chicken' && (
+                <div>
+                  {chickens.length === 0 ? (
+                    <div className="bg-[#241107] p-3 text-center pixel-box border-amber-950 mb-3">
+                      <span className="text-3xl block my-1">🏚️</span>
+                      <p className="font-pixel text-[9px] text-amber-200 mb-1">
+                        Chuồng Gà Đang Trống
+                      </p>
+                      <p className="font-vt323 text-sm text-amber-300/80 mb-2.5">
+                        Mới vào bạn chưa có gà. Hãy mua Gà con về nuôi để đẻ trứng bán lấy Xu!
+                      </p>
+                      <button
+                        onClick={() => handleBuyAnimal('chicken')}
+                        className="pixel-btn bg-yellow-500 hover:bg-yellow-400 text-black font-pixel text-[9px] px-3 py-1.5 shadow"
+                      >
+                        ➕ Mua Gà Con (300 Xu)
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2.5 mb-3">
+                      {chickens.map((chicken, idx) => {
+                        const now = Date.now();
+                        const isFed = chicken.fed;
+                        const durationSec = 60; // 60s
+                        const readyAt = chicken.readyAt || (chicken.fedAt ? chicken.fedAt + durationSec * 1000 : 0);
+                        const isReady = isFed && (chicken.eggsReady || now >= readyAt);
+                        const timeLeft = Math.max(0, Math.ceil((readyAt - now) / 1000));
+                        const progress = Math.min(100, Math.max(0, ((durationSec - timeLeft) / durationSec) * 100));
+
+                        return (
+                          <div
+                            key={chicken.id}
+                            className="bg-[#261309] p-2 pixel-box border-amber-950 flex items-center justify-between"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className={`text-2xl ${isReady ? 'animate-bounce' : isFed ? 'animate-pulse' : ''}`}>
+                                {isReady ? '🥚' : idx % 2 === 0 ? '🐓' : '🐔'}
+                              </span>
+                              <div>
+                                <span className="text-[10px] font-bold text-amber-100 block font-pixel">
+                                  Gà #{idx + 1}
+                                </span>
+                                {isReady ? (
+                                  <span className="font-pixel text-[8px] text-yellow-300 animate-pulse">
+                                    Đã đẻ trứng!
+                                  </span>
+                                ) : isFed ? (
+                                  <div className="flex flex-col">
+                                    <span className="font-pixel text-[7.5px] text-amber-300">
+                                      Ấp trứng: {timeLeft}s
+                                    </span>
+                                    <div className="w-16 h-1.5 bg-black/60 rounded overflow-hidden mt-0.5">
+                                      <div className="h-full bg-yellow-400" style={{ width: `${progress}%` }} />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <span className="font-pixel text-[8px] text-red-300">
+                                    Đang đói bụng
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {isReady ? (
+                              <button
+                                onClick={() => handleCollectProduct('chicken', chicken.id)}
+                                className="pixel-btn bg-yellow-400 hover:bg-yellow-300 text-black font-pixel text-[8.5px] px-2 py-1 flex items-center gap-1 shadow animate-bounce"
+                              >
+                                <Egg className="w-3 h-3" />
+                                <span>Nhặt</span>
+                              </button>
+                            ) : (
+                              <button
+                                disabled={isFed}
+                                onClick={() => handleFeedAnimal('chicken', chicken.id)}
+                                className={`pixel-btn font-pixel text-[8.5px] px-2 py-1 flex items-center gap-1 ${
+                                  isFed
+                                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                                    : 'bg-emerald-700 hover:bg-emerald-600 text-white'
+                                }`}
+                              >
+                                <Wheat className="w-3 h-3" />
+                                <span>Cho ăn (20x)</span>
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      {chickens.length < 4 && (
+                        <button
+                          onClick={() => handleBuyAnimal('chicken')}
+                          className="pixel-btn bg-[#2a1408] hover:bg-[#3a1c0b] text-amber-300 font-pixel text-[8px] py-1 border border-dashed border-amber-800"
+                        >
+                          ➕ Mua Thêm Gà Con (300 Xu)
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* PHÂN KHU 2: CHUỒNG HEO */}
+              {animalTab === 'pig' && (
+                <div>
+                  {pigs.length === 0 ? (
+                    <div className="bg-[#241107] p-3 text-center pixel-box border-rose-950 mb-3">
+                      <span className="text-3xl block my-1">🐷</span>
+                      <p className="font-pixel text-[9px] text-rose-200 mb-1">
+                        Chuồng Heo Đang Trống
+                      </p>
+                      <p className="font-vt323 text-sm text-rose-300/80 mb-2.5">
+                        Mua Heo con về nuôi lấy thịt sạch chất lượng cao bán cho thương lái thu về nhiều Xu!
+                      </p>
+                      <button
+                        onClick={() => handleBuyAnimal('pig')}
+                        className="pixel-btn bg-rose-600 hover:bg-rose-500 text-white font-pixel text-[9px] px-3 py-1.5 shadow"
+                      >
+                        ➕ Mua Heo Con (1,200 Xu)
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2.5 mb-3">
+                      {pigs.map((pig, idx) => {
+                        const now = Date.now();
+                        const isFed = pig.fed;
+                        const durationSec = 150; // 150s
+                        const readyAt = pig.readyAt || (pig.fedAt ? pig.fedAt + durationSec * 1000 : 0);
+                        const isReady = isFed && (pig.productReady || now >= readyAt);
+                        const timeLeft = Math.max(0, Math.ceil((readyAt - now) / 1000));
+                        const progress = Math.min(100, Math.max(0, ((durationSec - timeLeft) / durationSec) * 100));
+
+                        return (
+                          <div
+                            key={pig.id}
+                            className="bg-[#261309] p-2 pixel-box border-rose-950 flex items-center justify-between"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className={`text-2xl ${isReady ? 'animate-bounce' : isFed ? 'animate-pulse' : ''}`}>
+                                {isReady ? '🥩' : '🐷'}
+                              </span>
+                              <div>
+                                <span className="text-[10px] font-bold text-rose-100 block font-pixel">
+                                  Heo #{idx + 1}
+                                </span>
+                                {isReady ? (
+                                  <span className="font-pixel text-[8px] text-yellow-300 animate-pulse">
+                                    Đã lớn xuất chuồng!
+                                  </span>
+                                ) : isFed ? (
+                                  <div className="flex flex-col">
+                                    <span className="font-pixel text-[7.5px] text-rose-300">
+                                      Đang lớn: {formatTimeLeft(timeLeft)}
+                                    </span>
+                                    <div className="w-16 h-1.5 bg-black/60 rounded overflow-hidden mt-0.5">
+                                      <div className="h-full bg-rose-500" style={{ width: `${progress}%` }} />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <span className="font-pixel text-[8px] text-red-300">
+                                    Đang đói cám
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {isReady ? (
+                              <button
+                                onClick={() => handleCollectProduct('pig', pig.id)}
+                                className="pixel-btn bg-rose-600 hover:bg-rose-500 text-white font-pixel text-[8.5px] px-2 py-1 flex items-center gap-1 shadow animate-bounce"
+                              >
+                                <span>Gặt thịt</span>
+                              </button>
+                            ) : (
+                              <button
+                                disabled={isFed}
+                                onClick={() => handleFeedAnimal('pig', pig.id)}
+                                className={`pixel-btn font-pixel text-[8.5px] px-2 py-1 flex items-center gap-1 ${
+                                  isFed
+                                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                                    : 'bg-amber-700 hover:bg-amber-600 text-white'
+                                }`}
+                              >
+                                <span>Đổ cám (50x)</span>
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      {pigs.length < 4 && (
+                        <button
+                          onClick={() => handleBuyAnimal('pig')}
+                          className="pixel-btn bg-[#2a1408] hover:bg-[#3a1c0b] text-rose-300 font-pixel text-[8px] py-1 border border-dashed border-rose-800"
+                        >
+                          ➕ Mua Thêm Heo Con (1,200 Xu)
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Farm Merchant NPC (Lái buôn nông sản) */}
+            {/* Farm Merchant NPC (Bác Ba Nông Dân) */}
             <div className="bg-[#2d160b] pixel-box-wood p-3.5">
               <div className="flex items-center gap-2.5 mb-2">
                 <div className="w-10 h-10 bg-amber-300 border-2 border-black flex items-center justify-center text-xl shrink-0">
                   🧔‍♂️
                 </div>
                 <div>
-                  <h4 className="font-pixel text-[11px] text-amber-200">Bac Ba Nong Dan</h4>
-                  <p className="font-pixel text-[8px] text-yellow-400">Lai buon Avatar</p>
+                  <h4 className="font-pixel text-[11px] text-amber-200">Bác Ba Nông Dân</h4>
+                  <p className="font-pixel text-[8px] text-yellow-400">Thương Lái Nông Sản</p>
                 </div>
               </div>
               <p className="text-xs font-vt323 text-base text-amber-100/90 italic bg-[#170a04] p-2 border border-amber-900/60 mb-3">
-                &ldquo;Ba con cu cham chi cay cay, co bao nhieu nong san va trung ga toi bao tieu thu mua toan bo gia cao!&rdquo;
+                &ldquo;Bà con chăm chỉ trồng trọt và chăn nuôi, có bao nhiêu nông sản, trứng gà, thịt heo tôi bao tiêu thu mua toàn bộ giá cao!&rdquo;
               </p>
 
               {/* Total Crops summary */}
               <div className="bg-[#170a04] p-2 border border-amber-900/60 flex items-center justify-between text-xs">
-                <span className="font-pixel text-[8px] text-amber-300">Da gat:</span>
+                <span className="font-pixel text-[8px] text-amber-300">Đã gặt:</span>
                 <span className="font-pixel text-[9px] text-yellow-400">
-                  {user.stats.cropsHarvested} Cay hoa mau
+                  {user.stats.cropsHarvested} Cây hoa màu
                 </span>
               </div>
             </div>
@@ -670,7 +921,7 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
               <div className="flex items-center gap-2">
                 <span className="text-2xl">🌱</span>
                 <h3 className="font-pixel text-xs sm:text-sm text-amber-200">
-                  Gieo Hat Vao O #{selectedPlot.id}
+                  Gieo Hạt Vào Ô #{selectedPlot.id}
                 </h3>
               </div>
               <button
@@ -689,7 +940,7 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[60vh] overflow-y-auto pr-1">
               {CROPS.map((crop) => {
                 const userInventorySeed = user.inventory.find(
-                  (i) => i.type === 'seed' && (i.id === `${crop.id}_seed` || i.id === crop.id)
+                  (i) => i.type === 'seed' && (i.id === `seed_${crop.id}` || i.id === `${crop.id}_seed` || i.id === crop.id)
                 );
                 const seedCount = userInventorySeed ? userInventorySeed.count : 0;
                 const isLocked = user.level < crop.levelRequired;
@@ -722,8 +973,8 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
                           {crop.description}
                         </p>
                         <div className="flex items-center gap-2 mt-1 font-pixel text-[8px] text-amber-300">
-                          <span>⏱️ {crop.growDuration}s</span>
-                          <span>⭐ +{crop.expReward}</span>
+                          <span>⏱️ {formatTimeLeft(crop.growDuration)}</span>
+                          <span>⭐ +{crop.expReward} EXP</span>
                         </div>
                       </div>
                     </div>
@@ -732,11 +983,11 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
                       <div className="font-pixel text-[9px]">
                         {seedCount > 0 ? (
                           <span className="text-emerald-400">
-                            Co: {seedCount} hat
+                            Có: {seedCount} hạt
                           </span>
                         ) : (
                           <span className="text-yellow-400">
-                            Gia: {crop.seedPrice} Xu
+                            Giá: {crop.seedPrice} Xu
                           </span>
                         )}
                       </div>
@@ -782,12 +1033,12 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
                     {status.mature ? status.crop?.icon : '🌱'}
                   </div>
                   <h3 className="font-pixel text-xs text-amber-200">
-                    Luong #{selectedPlot.id} - {status.crop?.name}
+                    Luống #{selectedPlot.id} - {status.crop?.name}
                   </h3>
                   <p className="font-vt323 text-base text-amber-300 mt-1">
                     {status.mature
-                      ? 'Cay da chin vang, san sang thu hoach!'
-                      : `Thoi gian con: ${status.timeLeft} giay`}
+                      ? 'Cây đã chín vàng, sẵn sàng thu hoạch!'
+                      : `Thời gian còn lại: ${formatTimeLeft(status.timeLeft)}`}
                   </p>
 
                   {/* Actions buttons */}
@@ -798,44 +1049,37 @@ export const FarmArea: React.FC<FarmAreaProps> = ({
                           handleHarvestPlot(selectedPlot.id);
                           setSelectedPlot(null);
                         }}
-                        className="pixel-btn bg-yellow-500 hover:bg-yellow-400 text-black font-pixel text-[10px] py-2.5 flex items-center justify-center gap-1.5 shadow"
+                        className="pixel-btn bg-yellow-500 hover:bg-yellow-400 text-black font-pixel text-xs py-2 animate-bounce"
                       >
-                        <Sparkles className="w-4 h-4" />
-                        <span>THU HOACH NGAY</span>
+                        🌾 Thu Hoạch Ngay
                       </button>
                     ) : (
                       <>
-                        <button
-                          disabled={selectedPlot.watered}
-                          onClick={() => {
-                            handleWaterPlot(selectedPlot.id);
-                            setSelectedPlot(null);
-                          }}
-                          className={`pixel-btn py-2 flex items-center justify-center gap-1.5 font-pixel text-[9px] ${
-                            selectedPlot.watered
-                              ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                              : 'bg-sky-600 hover:bg-sky-500 text-white'
-                          }`}
-                        >
-                          <Droplets className="w-3.5 h-3.5" />
-                          <span>{selectedPlot.watered ? 'Da tuoi nuoc' : 'Tuoi Nuoc Cho Cay'}</span>
-                        </button>
+                        {!selectedPlot.watered && (
+                          <button
+                            onClick={() => {
+                              handleWaterPlot(selectedPlot.id);
+                              setSelectedPlot(null);
+                            }}
+                            className="pixel-btn bg-sky-700 hover:bg-sky-600 text-white font-pixel text-[10px] py-1.5 flex items-center justify-center gap-1.5"
+                          >
+                            <Droplets className="w-3.5 h-3.5" />
+                            <span>Tưới Nước</span>
+                          </button>
+                        )}
 
-                        <button
-                          disabled={selectedPlot.fertilized}
-                          onClick={() => {
-                            handleFertilizePlot(selectedPlot.id);
-                            setSelectedPlot(null);
-                          }}
-                          className={`pixel-btn py-2 flex items-center justify-center gap-1.5 font-pixel text-[9px] ${
-                            selectedPlot.fertilized
-                              ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                              : 'bg-purple-700 hover:bg-purple-600 text-white'
-                          }`}
-                        >
-                          <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
-                          <span>{selectedPlot.fertilized ? 'Da bon phan' : 'Bon Phan Tang Toc (50%)'}</span>
-                        </button>
+                        {!selectedPlot.fertilized && (
+                          <button
+                            onClick={() => {
+                              handleFertilizePlot(selectedPlot.id);
+                              setSelectedPlot(null);
+                            }}
+                            className="pixel-btn bg-purple-700 hover:bg-purple-600 text-white font-pixel text-[10px] py-1.5 flex items-center justify-center gap-1.5"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+                            <span>Bón Phân (Rút ngắn thời gian)</span>
+                          </button>
+                        )}
                       </>
                     )}
                   </div>

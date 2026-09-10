@@ -94,6 +94,9 @@ import {
   handleCatchFish, 
   handleBuyHouse, 
   handleBuyVehicle,
+  handleBuyAnimal,
+  handleFeedAnimal,
+  handleCollectAnimalProduct,
   ALL_CROPS,
   ALL_FISH,
   ALL_HOUSES,
@@ -165,6 +168,27 @@ app.post('/api/game/buy-house', requireUser, (req, res) => {
 app.post('/api/game/buy-vehicle', requireUser, (req, res) => {
   const { vehicleId } = req.body;
   const result = handleBuyVehicle(req.user.id, vehicleId);
+  res.json(result);
+});
+
+// Chăn Nuôi: Mua Gà con, Heo con
+app.post('/api/game/animals/buy', requireUser, (req, res) => {
+  const { animalType } = req.body;
+  const result = handleBuyAnimal(req.user.id, animalType);
+  res.json(result);
+});
+
+// Chăn Nuôi: Cho vật nuôi ăn
+app.post('/api/game/animals/feed', requireUser, (req, res) => {
+  const { animalType, animalId } = req.body;
+  const result = handleFeedAnimal(req.user.id, animalType, Number(animalId));
+  res.json(result);
+});
+
+// Chăn Nuôi: Thu hoạch sản phẩm (trứng, thịt)
+app.post('/api/game/animals/collect', requireUser, (req, res) => {
+  const { animalType, animalId } = req.body;
+  const result = handleCollectAnimalProduct(req.user.id, animalType, Number(animalId));
   res.json(result);
 });
 
