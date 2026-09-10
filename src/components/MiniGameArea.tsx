@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { UserProfile } from '../types';
 import { sounds } from '../utils/audio';
 import confetti from 'canvas-confetti';
@@ -6,12 +6,15 @@ import {
   Dices, 
   Sparkles, 
   Coins, 
-  Gem, 
   RotateCw, 
-  Trophy,
   History,
-  AlertCircle
+  Timer,
+  Users,
+  Flame,
+  Volume2,
+  Trophy
 } from 'lucide-react';
+import { BauCuaBowl } from './BauCuaBowl';
 
 interface MiniGameAreaProps {
   user: UserProfile;
@@ -21,24 +24,29 @@ interface MiniGameAreaProps {
 
 type BauCuaChoice = 'bau' | 'cua' | 'tom' | 'ca' | 'ga' | 'nai';
 
-const BAU_CUA_ITEMS: { id: BauCuaChoice; name: string; icon: string; color: string }[] = [
-  { id: 'bau', name: 'Bau', icon: '🍐', color: 'from-amber-600 to-amber-800' },
-  { id: 'cua', name: 'Cua', icon: '🦀', color: 'from-rose-600 to-red-800' },
-  { id: 'tom', name: 'Tom', icon: '🦐', color: 'from-orange-600 to-orange-800' },
-  { id: 'ca', name: 'Ca', icon: '🐟', color: 'from-sky-600 to-blue-800' },
-  { id: 'ga', name: 'Ga', icon: '🐓', color: 'from-yellow-600 to-yellow-800' },
-  { id: 'nai', name: 'Nai', icon: '🦌', color: 'from-emerald-700 to-green-900' },
+const BAU_CUA_ITEMS: { id: BauCuaChoice; name: string; icon: string; color: string; bgBadge: string }[] = [
+  { id: 'bau', name: 'Bầu', icon: '🍐', color: 'from-amber-600 to-amber-800', bgBadge: 'bg-amber-500' },
+  { id: 'cua', name: 'Cua', icon: '🦀', color: 'from-rose-600 to-red-800', bgBadge: 'bg-rose-500' },
+  { id: 'tom', name: 'Tôm', icon: '🦐', color: 'from-orange-600 to-orange-800', bgBadge: 'bg-orange-500' },
+  { id: 'ca', name: 'Cá', icon: '🐟', color: 'from-sky-600 to-blue-800', bgBadge: 'bg-sky-500' },
+  { id: 'ga', name: 'Gà', icon: '🐓', color: 'from-yellow-600 to-yellow-800', bgBadge: 'bg-yellow-500' },
+  { id: 'nai', name: 'Nai', icon: '🦌', color: 'from-emerald-700 to-green-900', bgBadge: 'bg-emerald-600' },
 ];
+
+const MASCOT_MAP = BAU_CUA_ITEMS.reduce((acc, item) => {
+  acc[item.id] = item;
+  return acc;
+}, {} as Record<string, typeof BAU_CUA_ITEMS[0]>);
 
 const WHEEL_REWARDS = [
   { id: 'xu_300', text: '300 Xu', type: 'xu', amount: 300, icon: '🪙', color: '#eab308' },
   { id: 'xu_800', text: '800 Xu', type: 'xu', amount: 800, icon: '💰', color: '#f59e0b' },
-  { id: 'luong_3', text: '3 Luong', type: 'luong', amount: 3, icon: '💎', color: '#c084fc' },
+  { id: 'luong_3', text: '3 Lượng', type: 'luong', amount: 3, icon: '💎', color: '#c084fc' },
   { id: 'xu_2000', text: '2,000 Xu', type: 'xu', amount: 2000, icon: '👑', color: '#e11d48' },
-  { id: 'luong_8', text: '8 Luong', type: 'luong', amount: 8, icon: '✨', color: '#a855f7' },
-  { id: 'seeds', text: 'Hat Dau Tay', type: 'item', icon: '🍓', color: '#10b981' },
-  { id: 'bait_magic', text: '3 Moi Than', type: 'bait', icon: '🔮', color: '#3b82f6' },
-  { id: 'wings', text: 'Canh Thien Than', type: 'wings', icon: '🪽', color: '#fbbf24' },
+  { id: 'luong_8', text: '8 Lượng', type: 'luong', amount: 8, icon: '✨', color: '#a855f7' },
+  { id: 'seeds', text: 'Hạt Dâu Tây', type: 'item', icon: '🍓', color: '#10b981' },
+  { id: 'bait_magic', text: '3 Mồi Thần', type: 'bait', icon: '🔮', color: '#3b82f6' },
+  { id: 'wings', text: 'Cánh Thiên Thần', type: 'wings', icon: '🪽', color: '#fbbf24' },
 ];
 
 export const MiniGameArea: React.FC<MiniGameAreaProps> = ({
@@ -48,138 +56,155 @@ export const MiniGameArea: React.FC<MiniGameAreaProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'baucua' | 'wheel'>('baucua');
 
-  // Bầu Cua State
-  const [bets, setBets] = useState<Record<BauCuaChoice, number>>({
-    bau: 0,
-    cua: 0,
-    tom: 0,
-    ca: 0,
-    ga: 0,
-    nai: 0,
+  // Realtime Bầu Cua State
+  const [phase, setPhase] = useState<'BETTING' | 'SHAKING' | 'PEEKING' | 'PAYOUT'>('BETTING');
+  const [remainingSec, setRemainingSec] = useState<number>(25);
+  const [roundId, setRoundId] = useState<number>(0);
+  const [dice, setDice] = useState<string[] | null>(null);
+  const [totalBets, setTotalBets] = useState<Record<string, number>>({
+    bau: 0, cua: 0, tom: 0, ca: 0, ga: 0, nai: 0
   });
+  const [myBets, setMyBets] = useState<Record<BauCuaChoice, number>>({
+    bau: 0, cua: 0, tom: 0, ca: 0, ga: 0, nai: 0
+  });
+  const [history, setHistory] = useState<{ id: number; dice: string[]; time: string }[]>([]);
   const [chipAmount, setChipAmount] = useState<number>(50);
-  const [isRolling, setIsRolling] = useState<boolean>(false);
-  const [diceResults, setDiceResults] = useState<BauCuaChoice[]>(['bau', 'cua', 'tom']);
   const [lastWinAmount, setLastWinAmount] = useState<number | null>(null);
+  const [isSubmittingBet, setIsSubmittingBet] = useState<boolean>(false);
 
   // Wheel State
   const [wheelRotation, setWheelRotation] = useState<number>(0);
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
   const [wheelResult, setWheelResult] = useState<string | null>(null);
 
-  const totalBet = (Object.values(bets) as number[]).reduce((a: number, b: number) => a + b, 0);
+  const prevPhaseRef = useRef(phase);
 
-  // Place bet on a symbol
-  const handlePlaceBet = (choice: BauCuaChoice) => {
-    if (isRolling) return;
-    if (user.xu < totalBet + chipAmount) {
-      sounds.playClick();
-      onShowMessage(`Ban khong du Xu de dat them cuoc ${chipAmount} Xu!`);
-      return;
-    }
+  // Poll state / WebSocket state listener
+  useEffect(() => {
+    let isMounted = true;
 
-    sounds.playCoin();
-    setBets((prev) => ({
-      ...prev,
-      [choice]: prev[choice] + chipAmount,
-    }));
-  };
-
-  // Clear bets
-  const handleClearBets = () => {
-    if (isRolling) return;
-    sounds.playClick();
-    setBets({ bau: 0, cua: 0, tom: 0, ca: 0, ga: 0, nai: 0 });
-    setLastWinAmount(null);
-  };
-
-  // Roll Bầu Cua
-  const handleRollBauCua = () => {
-    if (isRolling) return;
-    if (totalBet <= 0) {
-      onShowMessage('Hay chon cac o linh vat de dat cuoc truoc khi xoc dia!');
-      return;
-    }
-    if (user.xu < totalBet) {
-      onShowMessage('Ban khong du so du Xu!');
-      return;
-    }
-
-    sounds.playDiceRoll();
-    setIsRolling(true);
-    setLastWinAmount(null);
-
-    // Deduct bet initially
-    const newBalance = user.xu - totalBet;
-    onUpdateUser({ xu: newBalance });
-
-    // Shaking simulation
-    setTimeout(() => {
-      // Pick 3 random dice
-      const choices: BauCuaChoice[] = ['bau', 'cua', 'tom', 'ca', 'ga', 'nai'];
-      const d1 = choices[Math.floor(Math.random() * choices.length)];
-      const d2 = choices[Math.floor(Math.random() * choices.length)];
-      const d3 = choices[Math.floor(Math.random() * choices.length)];
-      const results = [d1, d2, d3];
-      setDiceResults(results);
-
-      // Calculate winnings:
-      // If dice shows symbol, player gets back original bet + (match count * bet)
-      let totalWon = 0;
-      choices.forEach((choice) => {
-        const betOnChoice = bets[choice];
-        if (betOnChoice > 0) {
-          const matchCount = results.filter((r) => r === choice).length;
-          if (matchCount > 0) {
-            // win refund + payout
-            totalWon += betOnChoice + (betOnChoice * matchCount);
+    const fetchState = async () => {
+      try {
+        const token = localStorage.getItem('game_auth_token') || '';
+        const res = await fetch(`/api/game/baucua/state?token=${token}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && data.success) {
+            setPhase(data.phase);
+            setRemainingSec(data.remainingSec);
+            setRoundId(data.roundId);
+            if (data.dice) setDice(data.dice);
+            if (data.totalBets) setTotalBets(data.totalBets);
+            if (data.myBets) setMyBets(data.myBets);
+            if (data.history) setHistory(data.history);
           }
         }
+      } catch (e) {
+        // Fallback gracefully
+      }
+    };
+
+    fetchState();
+    const interval = setInterval(fetchState, 1000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Detect phase transitions for sounds and confetti
+  useEffect(() => {
+    if (prevPhaseRef.current !== phase) {
+      if (phase === 'SHAKING') {
+        sounds.playDiceRoll();
+      } else if (phase === 'PAYOUT') {
+        // Check if player won
+        const totalWon = calculateMyWinnings();
+        if (totalWon > 0) {
+          setLastWinAmount(totalWon);
+          sounds.playWin();
+          try {
+            confetti({ particleCount: 70, spread: 90, origin: { y: 0.6 } });
+          } catch {}
+          onShowMessage(`🎉 THẮNG LỚN! Bạn nhận được ${totalWon.toLocaleString('vi-VN')} Xu từ Bầu Cua!`);
+          
+          // Refresh user balance
+          const token = localStorage.getItem('game_auth_token') || '';
+          fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+            .then(r => r.json())
+            .then(d => { if (d.success) onUpdateUser(d.user); });
+        } else {
+          setLastWinAmount(0);
+        }
+      } else if (phase === 'BETTING') {
+        // New round reset
+        setMyBets({ bau: 0, cua: 0, tom: 0, ca: 0, ga: 0, nai: 0 });
+        setLastWinAmount(null);
+      }
+      prevPhaseRef.current = phase;
+    }
+  }, [phase]);
+
+  const calculateMyWinnings = () => {
+    if (!dice || dice.length !== 3) return 0;
+    let won = 0;
+    BAU_CUA_ITEMS.forEach((item) => {
+      const bet = myBets[item.id] || 0;
+      if (bet > 0) {
+        const matches = dice.filter((d) => d === item.id).length;
+        if (matches > 0) {
+          won += bet + (bet * matches);
+        }
+      }
+    });
+    return won;
+  };
+
+  const myTotalBet = Object.values(myBets).reduce((a, b) => a + b, 0);
+
+  // Place bet on a mascot
+  const handlePlaceBet = async (choice: BauCuaChoice) => {
+    if (phase !== 'BETTING') {
+      onShowMessage('⏳ Đang trong thời gian lắc/mở bát, vui lòng chờ vòng cược mới!');
+      return;
+    }
+
+    if (user.xu < chipAmount) {
+      sounds.playClick();
+      onShowMessage(`❌ Bạn không đủ Xu để đặt thêm cược ${chipAmount} Xu!`);
+      return;
+    }
+
+    if (isSubmittingBet) return;
+    setIsSubmittingBet(true);
+    sounds.playCoin();
+
+    try {
+      const token = localStorage.getItem('game_auth_token') || '';
+      const res = await fetch('/api/game/baucua/bet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ mascot: choice, amount: chipAmount }),
       });
 
-      setIsRolling(false);
-      setLastWinAmount(totalWon);
-
-      // Update user state
-      if (totalWon > 0) {
-        sounds.playWin();
-        try {
-          confetti({ particleCount: 50, spread: 80, origin: { y: 0.6 } });
-        } catch {
-          // Ignored
-        }
-
-        // Check quest progress
-        const updatedQuests = user.quests.map((q) => {
-          if (q.id === 'quest_casino') {
-            const newProg = Math.min(q.target, q.progress + 1);
-            return { ...q, progress: newProg, completed: newProg >= q.target };
-          }
-          return q;
-        });
-
-        onUpdateUser({
-          xu: newBalance + totalWon,
-          quests: updatedQuests,
-          stats: {
-            ...user.stats,
-            miniGamesPlayed: user.stats.miniGamesPlayed + 1,
-            miniGamesWon: user.stats.miniGamesWon + 1,
-            moneyEarned: user.stats.moneyEarned + totalWon,
-          },
-        });
-        onShowMessage(`🎉 THANG LON! Ban da thu ve ${totalWon} Xu tu song Bau Cua!`);
+      const data = await res.json();
+      if (data.success) {
+        setMyBets((prev) => ({
+          ...prev,
+          [choice]: prev[choice] + chipAmount,
+        }));
+        onUpdateUser({ xu: data.newBalance });
       } else {
-        sounds.playClick();
-        onUpdateUser({
-          stats: {
-            ...user.stats,
-            miniGamesPlayed: user.stats.miniGamesPlayed + 1,
-          },
-        });
-        onShowMessage(`Truot roi! Ket qua la: ${d1.toUpperCase()} - ${d2.toUpperCase()} - ${d3.toUpperCase()}. Thu lai may man nhe!`);
+        onShowMessage(`❌ ${data.error || 'Không thể đặt cược'}`);
       }
-    }, 1800);
+    } catch (e) {
+      onShowMessage('Lỗi kết nối máy chủ khi cược.');
+    } finally {
+      setIsSubmittingBet(false);
+    }
   };
 
   // Spin Lucky Wheel
@@ -188,7 +213,7 @@ export const MiniGameArea: React.FC<MiniGameAreaProps> = ({
     const spinCost = 100;
 
     if (user.xu < spinCost) {
-      onShowMessage(`Ban can 100 Xu de quay Vong Quay May Man!`);
+      onShowMessage(`Bạn cần 100 Xu để quay Vòng Quay Hoàng Kim!`);
       return;
     }
 
@@ -205,7 +230,6 @@ export const MiniGameArea: React.FC<MiniGameAreaProps> = ({
 
     // Compute target rotation
     const segmentAngle = 360 / WHEEL_REWARDS.length;
-    // Extra full spins: 5 to 7 full circles
     const fullSpins = 360 * (5 + Math.floor(Math.random() * 2));
     const targetDeg = wheelRotation + fullSpins + (360 - (prizeIndex * segmentAngle + segmentAngle / 2));
 
@@ -216,9 +240,7 @@ export const MiniGameArea: React.FC<MiniGameAreaProps> = ({
       sounds.playWin();
       try {
         confetti({ particleCount: 60, spread: 80, origin: { y: 0.6 } });
-      } catch {
-        // Ignored
-      }
+      } catch {}
       setWheelResult(prize.text);
 
       // Reward distribution
@@ -230,13 +252,13 @@ export const MiniGameArea: React.FC<MiniGameAreaProps> = ({
         const updatedInv = [...user.inventory];
         const existIdx = updatedInv.findIndex((i) => i.id === 'strawberry_seed');
         if (existIdx >= 0) updatedInv[existIdx].count += 2;
-        else updatedInv.push({ id: 'strawberry_seed', name: 'Hat Giong Dau Tay', type: 'seed', count: 2, sellPrice: 150, icon: '🍓', description: 'Hat giong quy toc' });
+        else updatedInv.push({ id: 'strawberry_seed', name: 'Hạt Giống Dâu Tây', type: 'seed', count: 2, sellPrice: 150, icon: '🍓', description: 'Hạt giống quý tộc' });
         onUpdateUser({ inventory: updatedInv });
       } else if (prize.type === 'bait') {
         const updatedInv = [...user.inventory];
         const existIdx = updatedInv.findIndex((i) => i.id === 'bait_magic');
         if (existIdx >= 0) updatedInv[existIdx].count += 3;
-        else updatedInv.push({ id: 'bait_magic', name: 'Moi Than Ky Loi Ngu', type: 'bait', count: 3, sellPrice: 50, icon: '🔮', description: 'Moi san thuy quai' });
+        else updatedInv.push({ id: 'bait_magic', name: 'Mồi Thần Kỳ Lôi Ngư', type: 'bait', count: 3, sellPrice: 50, icon: '🔮', description: 'Mồi săn thủy quái' });
         onUpdateUser({ inventory: updatedInv });
       } else if (prize.type === 'wings') {
         onUpdateUser({
@@ -244,7 +266,7 @@ export const MiniGameArea: React.FC<MiniGameAreaProps> = ({
         });
       }
 
-      onShowMessage(`🎁 Chuc mung! Ban quay trung: ${prize.text}!`);
+      onShowMessage(`🎁 Chúc mừng! Bạn quay trúng: ${prize.text}!`);
     }, 4200);
   };
 
@@ -257,10 +279,10 @@ export const MiniGameArea: React.FC<MiniGameAreaProps> = ({
             <span className="text-3xl sm:text-4xl filter drop-shadow">🎰</span>
             <div>
               <h1 className="text-base sm:text-lg font-black text-purple-200 tracking-wide uppercase font-pixel flex items-center gap-2 pixel-shadow-sm">
-                Khu Giai Tri Song Bai
+                Sòng Bài Dân Gian Realtime
               </h1>
               <p className="font-vt323 text-base text-purple-300/80">
-                Thu van may voi Bau Cua Tom Ca truyen thong va Vong Quay Hoang Kim!
+                Lắc Bầu Cua Tôm Cá đồng bộ nhiều người chơi & Vòng Quay Hoàng Kim!
               </p>
             </div>
           </div>
@@ -275,7 +297,7 @@ export const MiniGameArea: React.FC<MiniGameAreaProps> = ({
                   : 'bg-[#2a0c3b] text-purple-300 hover:text-white'
               }`}
             >
-              🎲 Bau Cua Tom Ca
+              🎲 Bầu Cua Dân Gian
             </button>
             <button
               onClick={() => { sounds.playClick(); setActiveTab('wheel'); }}
@@ -285,178 +307,192 @@ export const MiniGameArea: React.FC<MiniGameAreaProps> = ({
                   : 'bg-[#2a0c3b] text-purple-300 hover:text-white'
               }`}
             >
-              🎡 Vong Quay Vang
+              🎡 Vòng Quay Vàng
             </button>
           </div>
         </div>
 
-        {/* TAB 1: BẦU CUA TÔM CÁ */}
+        {/* TAB 1: BẦU CUA REALTIME MULTIPLAYER */}
         {activeTab === 'baucua' && (
           <div className="bg-[#1c0827] pixel-box p-4 sm:p-5 shadow-2xl">
-            {/* Shaking Bowl & Dice Display */}
-            <div className="bg-[#12041a] pixel-box-gold p-3.5 mb-5 flex flex-col items-center justify-center relative overflow-hidden">
-              <span className="font-pixel text-[9px] text-yellow-400 tracking-widest mb-2">
-                BAT XOC DIA AVATAR
-              </span>
-
-              {/* Rolling Animation or Result Dice */}
-              <div className="flex items-center justify-center gap-3 my-2">
-                {isRolling ? (
-                  <div className="flex gap-3 items-center">
-                    <div className="w-14 h-14 bg-purple-950 border-2 border-yellow-400 flex items-center justify-center text-3xl animate-spin">
-                      🎲
-                    </div>
-                    <div className="w-14 h-14 bg-purple-950 border-2 border-yellow-400 flex items-center justify-center text-3xl animate-bounce">
-                      🎲
-                    </div>
-                    <div className="w-14 h-14 bg-purple-950 border-2 border-yellow-400 flex items-center justify-center text-3xl animate-spin">
-                      🎲
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex gap-3 items-center">
-                    {diceResults.map((result, idx) => {
-                      const item = BAU_CUA_ITEMS.find((i) => i.id === result);
-                      return (
-                        <div
-                          key={idx}
-                          className="w-14 h-14 sm:w-16 sm:h-16 bg-[#fff2cc] border-3 border-[#261208] flex flex-col items-center justify-center shadow-lg"
-                        >
-                          <span className="text-2xl sm:text-3xl filter drop-shadow">{item?.icon}</span>
-                          <span className="font-pixel text-[7px] text-amber-950 uppercase mt-0.5">
-                            {item?.name}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+            
+            {/* Top Status & Phase Countdown Bar */}
+            <div className="bg-[#12041a] pixel-box p-3 mb-4 flex flex-wrap items-center justify-between gap-2 border-purple-900">
+              <div className="flex items-center gap-2.5">
+                <span className="font-pixel text-[9px] text-yellow-400 flex items-center gap-1.5">
+                  <Flame className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
+                  <span>TRẠNG THÁI:</span>
+                </span>
+                
+                <span className={`font-pixel text-[10px] px-2.5 py-0.5 rounded shadow ${
+                  phase === 'BETTING'
+                    ? 'bg-emerald-700 text-emerald-100 animate-pulse'
+                    : phase === 'SHAKING'
+                      ? 'bg-purple-800 text-purple-100 animate-bounce'
+                      : phase === 'PEEKING'
+                        ? 'bg-amber-600 text-amber-100 animate-pulse'
+                        : 'bg-yellow-500 text-black font-bold'
+                }`}>
+                  {phase === 'BETTING' && '🟢 ĐANG MỞ CƯỢC'}
+                  {phase === 'SHAKING' && '🟣 ĐANG LẮC ĐĨA'}
+                  {phase === 'PEEKING' && '🟡 NẶN BÁT'}
+                  {phase === 'PAYOUT' && '👑 MỞ BÁT & TRẢ THƯỞNG'}
+                </span>
               </div>
 
-              {/* Status Banner */}
-              <div className="mt-2 text-center">
-                {isRolling ? (
-                  <span className="font-pixel text-[10px] text-yellow-300 animate-pulse">
-                    Dang xoc dia lac xuc xac... Cho mo bat!
+              <div className="flex items-center gap-3">
+                {/* Countdown timer */}
+                <div className="flex items-center gap-1.5 bg-black/50 px-2.5 py-1 rounded border border-yellow-500/50">
+                  <Timer className="w-3.5 h-3.5 text-yellow-400 animate-spin" />
+                  <span className="font-pixel text-xs text-yellow-300 font-bold">
+                    {remainingSec}s
                   </span>
-                ) : lastWinAmount !== null ? (
-                  lastWinAmount > 0 ? (
-                    <span className="font-pixel text-[11px] text-emerald-400 animate-bounce">
-                      🎉 Trung {lastWinAmount} Xu!
-                    </span>
-                  ) : (
-                    <span className="font-pixel text-[9px] text-rose-300">
-                      Khong trung o nao roi! Chuc ban may man lan sau.
-                    </span>
-                  )
-                ) : (
-                  <span className="font-vt323 text-base text-purple-300/90">
-                    Chon muc cuoc va bam vao cac o linh vat ban tin se xuat hien!
+                </div>
+
+                {/* Village total pot */}
+                <div className="flex items-center gap-1.5 bg-black/50 px-2.5 py-1 rounded border border-amber-500/40">
+                  <Coins className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="font-pixel text-[9px] text-amber-200">
+                    Làng cược: {Object.values(totalBets).reduce((a, b) => a + b, 0).toLocaleString('vi-VN')} Xu
                   </span>
-                )}
+                </div>
               </div>
             </div>
 
-            {/* 6 Betting Board Cells */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 mb-5">
+            {/* Interactive Bowl & Plate Area */}
+            <div className="bg-[#100317] pixel-box-gold p-4 mb-4 flex flex-col items-center justify-center relative overflow-hidden">
+              <BauCuaBowl 
+                phase={phase}
+                remainingSec={remainingSec}
+                dice={dice}
+                mascotInfo={MASCOT_MAP}
+              />
+            </div>
+
+            {/* 6 Mascot Betting Board Cells */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 mb-4">
               {BAU_CUA_ITEMS.map((item) => {
-                const betAmount = bets[item.id];
+                const myBet = myBets[item.id] || 0;
+                const villageBet = totalBets[item.id] || 0;
+                const isWinner = (phase === 'PAYOUT' || phase === 'PEEKING') && dice && dice.includes(item.id);
+                const matchCount = dice ? dice.filter(d => d === item.id).length : 0;
+
                 return (
                   <div
                     key={item.id}
                     onClick={() => handlePlaceBet(item.id)}
-                    className={`pixel-plot ${item.color} p-3 cursor-pointer select-none relative flex flex-col items-center justify-between min-h-[105px]`}
+                    className={`pixel-plot ${item.color} p-3 cursor-pointer select-none relative flex flex-col items-center justify-between min-h-[110px] transition-all transform hover:scale-[1.02] active:scale-95 ${
+                      isWinner ? 'ring-4 ring-yellow-400 animate-pulse shadow-[0_0_20px_rgba(250,204,21,0.6)]' : ''
+                    }`}
                   >
-                    {/* Bet badge on top */}
-                    {betAmount > 0 && (
-                      <div className="absolute top-1.5 right-1.5 bg-yellow-400 border border-black text-black font-pixel text-[8px] px-1.5 py-0.5 shadow flex items-center gap-0.5 animate-bounce">
-                        <Coins className="w-2.5 h-2.5" />
-                        <span>{betAmount}</span>
+                    {/* Multiplier Badge if multiple matches */}
+                    {isWinner && matchCount > 1 && (
+                      <div className="absolute top-1.5 left-1.5 bg-red-600 text-white font-pixel text-[8px] px-1.5 py-0.5 rounded shadow animate-bounce border border-yellow-300">
+                        x{matchCount}
                       </div>
                     )}
 
-                    <span className="text-4xl my-1 filter drop-shadow">
+                    {/* My Bet Badge */}
+                    {myBet > 0 && (
+                      <div className="absolute top-1.5 right-1.5 bg-yellow-400 border border-black text-black font-pixel text-[8.5px] px-1.5 py-0.5 shadow flex items-center gap-0.5 animate-bounce">
+                        <Coins className="w-2.5 h-2.5" />
+                        <span>{myBet.toLocaleString('vi-VN')}</span>
+                      </div>
+                    )}
+
+                    <span className="text-4xl sm:text-5xl my-1 filter drop-shadow">
                       {item.icon}
                     </span>
 
-                    <div className="text-center">
+                    <div className="text-center w-full">
                       <span className="font-pixel text-[10px] text-white tracking-wide uppercase block">
                         {item.name}
                       </span>
-                      <span className="font-vt323 text-sm text-yellow-200">
-                        {betAmount > 0 ? `Cuoc: ${betAmount} Xu` : 'Cham de cuoc'}
-                      </span>
+                      <div className="flex items-center justify-between text-[8px] font-pixel text-yellow-200/90 mt-1 bg-black/40 px-2 py-0.5 rounded">
+                        <span>Làng: {villageBet}</span>
+                        <span>{myBet > 0 ? `Tôi: ${myBet}` : 'Cược'}</span>
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
 
-            {/* Bet Controls & Action Buttons */}
-            <div className="bg-[#12041a] p-3 pixel-box border-purple-950 flex flex-wrap items-center justify-between gap-3">
+            {/* Bet Controls & Chip Selector */}
+            <div className="bg-[#12041a] p-3 pixel-box border-purple-950 flex flex-wrap items-center justify-between gap-3 mb-4">
               {/* Chip amount selector */}
-              <div className="flex items-center gap-1.5">
-                <span className="font-pixel text-[9px] text-purple-200">Cuoc:</span>
-                {[20, 50, 100, 200, 500].map((amount) => (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="font-pixel text-[9px] text-purple-200 mr-1">CHỌN PHỈNH:</span>
+                {[20, 50, 100, 200, 500, 1000].map((amount) => (
                   <button
                     key={amount}
-                    disabled={isRolling}
                     onClick={() => { sounds.playClick(); setChipAmount(amount); }}
-                    className={`pixel-btn px-2 py-1 text-[9px] font-pixel ${
+                    className={`pixel-btn px-2.5 py-1 text-[9px] font-pixel transition-all ${
                       chipAmount === amount
-                        ? 'bg-yellow-400 text-black border-yellow-200'
+                        ? 'bg-yellow-400 text-black border-yellow-200 shadow-md scale-105'
                         : 'bg-purple-950 text-purple-200 hover:bg-purple-900'
                     }`}
                   >
-                    {amount}
+                    {amount >= 1000 ? `${amount / 1000}k` : amount}
                   </button>
                 ))}
               </div>
 
-              {/* Total Bet & Action Buttons */}
-              <div className="flex items-center gap-2.5">
+              {/* Total User Bet in this round */}
+              <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <span className="font-pixel text-[8px] text-purple-300 block">Tong:</span>
+                  <span className="font-pixel text-[8px] text-purple-300 block">TỔNG CƯỢC CỦA BẠN:</span>
                   <span className="font-pixel text-xs text-yellow-400">
-                    {totalBet} Xu
+                    {myTotalBet.toLocaleString('vi-VN')} Xu
                   </span>
                 </div>
+              </div>
+            </div>
 
-                <button
-                  disabled={isRolling || totalBet === 0}
-                  onClick={handleClearBets}
-                  className="pixel-btn bg-gray-800 hover:bg-gray-700 text-gray-300 font-pixel text-[9px] px-2.5 py-1.5"
-                >
-                  Xoa
-                </button>
+            {/* History Table (Soi Cầu Bầu Cua) */}
+            <div className="bg-[#100317] p-3 pixel-box border-purple-900">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-pixel text-[9px] text-yellow-400 flex items-center gap-1.5">
+                  <History className="w-3.5 h-3.5 text-yellow-400" />
+                  <span>LỊCH SỬ KẾT QUẢ CÁC VÁN GẦN ĐÂY</span>
+                </span>
+                <span className="font-vt323 text-sm text-purple-300">
+                  12 ván trước
+                </span>
+              </div>
 
-                <button
-                  disabled={isRolling || totalBet === 0}
-                  onClick={handleRollBauCua}
-                  className={`pixel-btn font-pixel text-[10px] px-4 py-2 flex items-center gap-1.5 ${
-                    isRolling || totalBet === 0
-                      ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                      : 'bg-yellow-500 hover:bg-yellow-400 text-black animate-pulse'
-                  }`}
-                >
-                  <Dices className="w-3.5 h-3.5" />
-                  <span>{isRolling ? 'DANG XOC...' : 'MO BAT'}</span>
-                </button>
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                {history.length === 0 ? (
+                  <span className="font-vt323 text-sm text-gray-400">Đang cập nhật lịch sử vòng chơi...</span>
+                ) : (
+                  history.map((h, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-[#1f092b] border border-purple-800/60 p-1.5 rounded flex items-center gap-1 flex-shrink-0"
+                    >
+                      {h.dice.map((d, dIdx) => (
+                        <span key={dIdx} className="text-base filter drop-shadow">
+                          {MASCOT_MAP[d]?.icon || '🎲'}
+                        </span>
+                      ))}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
         )}
 
-        {/* TAB 2: VÒNG QUAY MAY MẮN (LUCKY WHEEL) */}
+        {/* TAB 2: VÒNG QUAY HOÀNG KIM */}
         {activeTab === 'wheel' && (
           <div className="bg-[#1c0827] pixel-box p-4 sm:p-6 flex flex-col items-center">
             <h3 className="font-pixel text-xs sm:text-sm text-yellow-300 mb-1 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-yellow-400" />
-              <span>VONG QUAY HOANG KIM</span>
+              <span>VÒNG QUAY HOÀNG KIM</span>
               <Sparkles className="w-4 h-4 text-yellow-400" />
             </h3>
             <p className="font-vt323 text-base text-purple-300/80 mb-4 text-center max-w-md">
-              Moi luot quay ton 100 Xu. Co hoi trung 2,000 Xu, 8 Luong, Hat giong dau tay hoac Canh thien than!
+              Mỗi lượt quay tốn 100 Xu. Cơ hội trúng 2,000 Xu, 8 Lượng, Hạt giống dâu tây hoặc Cánh thiên thần!
             </p>
 
             {/* Wheel graphic */}
@@ -513,12 +549,12 @@ export const MiniGameArea: React.FC<MiniGameAreaProps> = ({
                 }`}
               >
                 <RotateCw className={`w-4 h-4 ${isSpinning ? 'animate-spin' : ''}`} />
-                <span>{isSpinning ? 'DANG QUAY...' : 'QUAY (100 XU)'}</span>
+                <span>{isSpinning ? 'ĐANG QUAY...' : 'QUAY (100 XU)'}</span>
               </button>
 
               {wheelResult && (
                 <div className="bg-[#12041a] pixel-box border-yellow-500 font-pixel text-[9px] text-yellow-300 px-3 py-1.5 mt-2 animate-bounce">
-                  🎉 Trung: {wheelResult}!
+                  🎉 Trúng: {wheelResult}!
                 </div>
               )}
             </div>

@@ -96,6 +96,11 @@ import {
 } from './gameEconomy.js';
 import { claimQuestReward } from './questEngine.js';
 import { listMarketplaceItem, buyMarketplaceItem, getActiveMarketplaceListings } from './tradeEngine.js';
+import { bauCuaRoom } from './bauCuaEngine.js';
+
+// Khởi tạo Bầu Cua Room realtime broadcast
+bauCuaRoom.setBroadcastCallback(broadcastGlobalMessage);
+bauCuaRoom.startLoop();
 
 // Middleware xác thực token người chơi
 function requireUser(req, res, next) {
@@ -184,6 +189,21 @@ app.post('/api/game/market/buy', requireUser, (req, res) => {
   res.json(result);
 });
 
+// Bầu Cua: Lấy state hiện tại
+app.get('/api/game/baucua/state', (req, res) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : req.query.token;
+  const user = token ? getUserByToken(token) : null;
+  res.json({ success: true, ...bauCuaRoom.getStateForClient(user ? user.id : null) });
+});
+
+// Bầu Cua: Đặt cược
+app.post('/api/game/baucua/bet', requireUser, (req, res) => {
+  const { mascot, amount } = req.body;
+  const result = bauCuaRoom.placeBet(req.user.id, mascot, Number(amount));
+  res.json(result);
+});
+
 
 // 4. Đăng ký Admin Routes
 registerAdminRoutes(app, broadcastGlobalMessage);
@@ -246,6 +266,28 @@ wss.on('connection', (ws, req) => {
         } else {
           ws.send(JSON.stringify({ type: 'AUTH_FAILED', error: 'Token không hợp lệ.' }));
         }
+        return;
+      }
+
+      // Xử lý cược Bầu Cua qua WS
+      if (msg.type === 'BAUCUA_BET') {
+        if (!sessionUser) {
+          ws.send(JSON.stringify({ type: 'BAUCUA_BET_ERROR', error: 'Vui lòng đăng nhập trước khi cược!' }));
+          return;
+        }
+        const result = bauCuaRoom.placeBet(sessionUser.id, msg.mascot, Number(msg.amount));
+        if (result.success) {
+          ws.send(JSON.stringify({ type: 'BAUCUA_BET_SUCCESS', ...result }));
+        } else {
+          ws.send(JSON.stringify({ type: 'BAUCUA_BET_ERROR', error: result.error }));
+        }
+        return;
+      }
+
+      // Xử lý lấy state Bầu Cua qua WS
+      if (msg.type === 'BAUCUA_GET_STATE') {
+        const state = bauCuaRoom.getStateForClient(sessionUser ? sessionUser.id : null);
+        ws.send(JSON.stringify(state));
         return;
       }
 
