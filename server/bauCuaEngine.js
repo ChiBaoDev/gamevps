@@ -98,10 +98,11 @@ class BauCuaRoom {
       try {
         const db = getDb();
         const totalPot = Object.values(this.totalBets).reduce((a, b) => a + b, 0);
+        const roundUuid = `BC-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         db.prepare(`
-          INSERT INTO baucua_rounds (dice_1, dice_2, dice_3, total_pot, total_payout, created_at)
-          VALUES (?, ?, ?, ?, 0, CURRENT_TIMESTAMP)
-        `).run(d1, d2, d3, totalPot);
+          INSERT INTO baucua_rounds (round_uuid, dice_1, dice_2, dice_3, total_bets_xu, total_payout_xu, created_at)
+          VALUES (?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)
+        `).run(roundUuid, d1, d2, d3, totalPot);
       } catch (e) {
         console.error('[BauCua] Lỗi ghi SQLite round:', e);
       }
@@ -186,9 +187,9 @@ class BauCuaRoom {
         // Lưu bản ghi cược vào baucua_bets
         try {
           db.prepare(`
-            INSERT INTO baucua_bets (round_id, user_id, choice, amount, win_amount, created_at)
-            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-          `).run(this.roundId, userId, JSON.stringify(userBetInfo), totalBetXu, totalWinXu);
+            INSERT INTO baucua_bets (round_id, user_id, user_name, choice, bet_amount, payout_amount, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+          `).run(1, userId, userBetInfo.nickname || 'Người chơi', JSON.stringify(userBetInfo), totalBetXu, totalWinXu);
         } catch {}
       }
     });

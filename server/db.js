@@ -17,6 +17,10 @@ console.log(`[DB] Khởi động SQLite tại: ${DB_PATH}`);
 
 export const db = new DatabaseSync(DB_PATH);
 
+export function getDb() {
+  return db;
+}
+
 // Tối ưu hóa bộ nhớ RAM và hiệu năng ghi đồng thời (Zero-daemon, RAM chỉ ~8MB)
 db.exec(`
   PRAGMA journal_mode = WAL;
