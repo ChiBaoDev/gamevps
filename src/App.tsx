@@ -25,6 +25,7 @@ import { AdminModal } from './components/AdminModal';
 import { HouseModal } from './components/HouseModal';
 import { VehicleShopModal } from './components/VehicleShopModal';
 import { MarketplaceModal } from './components/MarketplaceModal';
+import { InspectProfileModal } from './components/InspectProfileModal';
 
 
 export default function App() {
@@ -43,6 +44,7 @@ export default function App() {
   const [showHouse, setShowHouse] = useState<boolean>(false);
   const [showVehicle, setShowVehicle] = useState<boolean>(false);
   const [showMarket, setShowMarket] = useState<boolean>(false);
+  const [inspectedPlayer, setInspectedPlayer] = useState<{ idOrName: string; initialProfile?: any } | null>(null);
 
   // Global marquee announcement from Admin
   const [globalAnnouncement, setGlobalAnnouncement] = useState<{ text: string; sender: string } | null>(null);
@@ -106,6 +108,11 @@ export default function App() {
     }, 4500);
     return () => clearTimeout(timer);
   }, [toastMessage]);
+
+  // Handler soi thông tin, nhà cửa & kho đồ người chơi
+  const handleInspectPlayer = useCallback((idOrName: string, initialProfile?: any) => {
+    setInspectedPlayer({ idOrName, initialProfile });
+  }, []);
 
   // Periodic passive energy recovery (1 energy every 25 seconds)
   useEffect(() => {
@@ -265,6 +272,7 @@ export default function App() {
                 user={user}
                 onUpdateUser={handleUpdateUser}
                 onShowMessage={showMessage}
+                onInspectPlayer={handleInspectPlayer}
               />
             )}
           </main>
@@ -315,6 +323,7 @@ export default function App() {
               onUpdateUser={handleUpdateUser}
               onClose={() => setShowMarket(false)}
               onShowMessage={showMessage}
+              onInspectPlayer={handleInspectPlayer}
             />
           )}
 
@@ -349,6 +358,7 @@ export default function App() {
             <LeaderboardModal
               user={user}
               onClose={() => setShowLeaderboard(false)}
+              onInspectPlayer={handleInspectPlayer}
             />
           )}
 
@@ -357,6 +367,16 @@ export default function App() {
               user={user}
               onUpdateUser={handleUpdateUser}
               onClose={() => setShowProfile(false)}
+              onShowMessage={showMessage}
+            />
+          )}
+
+          {/* Inspect Profile Modal (Soi nhà cửa & vật phẩm người khác) */}
+          {inspectedPlayer && (
+            <InspectProfileModal
+              targetIdOrName={inspectedPlayer.idOrName}
+              initialProfile={inspectedPlayer.initialProfile}
+              onClose={() => setInspectedPlayer(null)}
               onShowMessage={showMessage}
             />
           )}

@@ -326,7 +326,7 @@ export function adminGiftItem(userId, item) {
 /**
  * Định dạng Record từ DB thành UserProfile của Client
  */
-function formatUserProfile(record) {
+export function formatUserProfile(record) {
   let appearance = DEFAULT_APPEARANCE;
   let farmPlots = DEFAULT_FARM_PLOTS;
   let chickens = DEFAULT_CHICKENS;
@@ -383,3 +383,193 @@ function formatUserProfile(record) {
     lastLogin: Date.now(),
   };
 }
+
+// Danh sách NPC & Đại gia Danh Dự mẫu
+export const MOCK_BOT_PROFILES = {
+  'bot_congtu': {
+    id: 'bot_congtu',
+    username: 'congtubaclieu',
+    nickname: 'Công Tử Bạc Liêu',
+    role: 'player',
+    gender: 'male',
+    level: 99,
+    exp: 14850,
+    maxExp: 15000,
+    xu: 2500000,
+    luong: 888,
+    energy: 100,
+    maxEnergy: 300,
+    equippedHouseId: 'house_castle',
+    equippedVehicleId: 'veh_pegasus',
+    houses: ['house_leaf', 'house_tile', 'house_town', 'house_villa', 'house_castle'],
+    vehicles: ['veh_bicycle', 'veh_cub50', 'veh_sh', 'veh_supercar', 'veh_pegasus', 'veh_ufo'],
+    appearance: {
+      skinColor: '#fcd34d',
+      hairStyle: 'spiky',
+      hairColor: '#eab308',
+      shirtStyle: 'vest',
+      shirtColor: '#ca8a04',
+      pantsStyle: 'jeans',
+      pantsColor: '#172554',
+      hat: 'crown',
+      wings: 'angel',
+      glasses: 'black',
+    },
+    inventory: [
+      { id: 'fish_golden_turtle', name: 'Rùa Vàng Nghìn Năm', type: 'fish', count: 3, sellPrice: 15000, icon: '🐢', description: 'Thần Kim Quy ngậm ngọc' },
+      { id: 'fish_dragon', name: 'Cá Rồng Kim Long Thần Thoại', type: 'fish', count: 5, sellPrice: 10000, icon: '🐉', description: 'Huyền thoại hồ câu Avatar' },
+      { id: 'golden_apple', name: 'Táo Vàng Thần Thoại', type: 'crop', count: 20, sellPrice: 10000, icon: '🍎', description: 'Trái cây thần tích' },
+      { id: 'rod_titan', name: 'Cần Titan Sấm Sét', type: 'fashion', count: 1, sellPrice: 35000, icon: '🔱', description: 'Bảo vật của Vua Thủy Tề' },
+      { id: 'wings_demon', name: 'Cánh Ác Ma Lửa', type: 'fashion', count: 1, sellPrice: 40, icon: '🦇', description: 'Cánh dơi quỷ vương ma mị' },
+    ],
+    farmPlots: [],
+    chickens: [{ id: 1, fed: true, eggsReady: true, fedAt: Date.now() - 70000 }],
+    pigs: [{ id: 1, fed: true, productReady: true, fedAt: Date.now() - 160000 }],
+    stats: {
+      cropsHarvested: 5200,
+      fishCaught: 3800,
+      miniGamesPlayed: 990,
+      miniGamesWon: 780,
+      moneyEarned: 15000000,
+    }
+  },
+  'bot_coba': {
+    id: 'bot_coba',
+    username: 'cobasaigon',
+    nickname: 'Cô Ba Sài Gòn',
+    role: 'player',
+    gender: 'female',
+    level: 68,
+    exp: 9200,
+    maxExp: 10200,
+    xu: 1820000,
+    luong: 350,
+    energy: 100,
+    maxEnergy: 200,
+    equippedHouseId: 'house_villa',
+    equippedVehicleId: 'veh_sh',
+    houses: ['house_leaf', 'house_tile', 'house_town', 'house_villa'],
+    vehicles: ['veh_bicycle', 'veh_cub50', 'veh_sh'],
+    appearance: {
+      skinColor: '#fde047',
+      hairStyle: 'long',
+      hairColor: '#1c1917',
+      shirtStyle: 'dress',
+      shirtColor: '#ec4899',
+      pantsStyle: 'skirt',
+      pantsColor: '#be185d',
+      hat: 'flower',
+      wings: 'angel',
+      glasses: 'cool',
+    },
+    inventory: [
+      { id: 'orchid', name: 'Hoa Lan Quý Tộc', type: 'crop', count: 15, sellPrice: 1500, icon: '🌸', description: 'Hoa lan rừng quý hiếm' },
+      { id: 'strawberry', name: 'Dâu Tây Hoàng Gia', type: 'crop', count: 30, sellPrice: 4500, icon: '🍓', description: 'Dâu tây hoàng gia' },
+      { id: 'fish_dolphin', name: 'Cá Heo Bạch Tạng', type: 'fish', count: 2, sellPrice: 5500, icon: '🐬', description: 'Cá heo trắng may mắn' },
+      { id: 'hat_crown', name: 'Vương Miện Hoàng Gia', type: 'fashion', count: 1, sellPrice: 25, icon: '👑', description: 'Đính kim cương quý tộc' },
+    ],
+    farmPlots: [],
+    chickens: [{ id: 1, fed: true, eggsReady: true, fedAt: Date.now() - 70000 }],
+    pigs: [],
+    stats: {
+      cropsHarvested: 2900,
+      fishCaught: 1420,
+      miniGamesPlayed: 450,
+      miniGamesWon: 310,
+      moneyEarned: 6500000,
+    }
+  },
+  'bot_nongdan': {
+    id: 'bot_nongdan',
+    username: 'bacbanongdan',
+    nickname: 'Bác Ba Nông Dân',
+    role: 'player',
+    gender: 'male',
+    level: 45,
+    exp: 5800,
+    maxExp: 6750,
+    xu: 950000,
+    luong: 80,
+    energy: 100,
+    maxEnergy: 130,
+    equippedHouseId: 'house_tile',
+    equippedVehicleId: 'veh_cub50',
+    houses: ['house_leaf', 'house_tile'],
+    vehicles: ['veh_bicycle', 'veh_cub50'],
+    appearance: {
+      skinColor: '#f59e0b',
+      hairStyle: 'short',
+      hairColor: '#451a03',
+      shirtStyle: 'tshirt',
+      shirtColor: '#15803d',
+      pantsStyle: 'shorts',
+      pantsColor: '#1e3a8a',
+      hat: 'straw',
+      glasses: 'black',
+    },
+    inventory: [
+      { id: 'watermelon', name: 'Dưa Hấu Đỏ', type: 'crop', count: 50, sellPrice: 1900, icon: '🍉', description: 'Trái dưa hấu đỏ chín mọng' },
+      { id: 'grape', name: 'Nho Tím Ninh Thuận', type: 'crop', count: 40, sellPrice: 3200, icon: '🍇', description: 'Chùm nho mọng nước' },
+      { id: 'fish_snakehead', name: 'Cá Lóc Đồng (Cá Quả)', type: 'fish', count: 18, sellPrice: 280, icon: '🐟', description: 'Cá lóc săn mồi' },
+    ],
+    farmPlots: [],
+    chickens: [{ id: 1, fed: true, eggsReady: true, fedAt: Date.now() - 70000 }, { id: 2, fed: true, eggsReady: true, fedAt: Date.now() - 70000 }],
+    pigs: [{ id: 1, fed: true, productReady: true, fedAt: Date.now() - 160000 }],
+    stats: {
+      cropsHarvested: 8900,
+      fishCaught: 950,
+      miniGamesPlayed: 120,
+      miniGamesWon: 60,
+      moneyEarned: 3200000,
+    }
+  }
+};
+
+/**
+ * Tìm người chơi theo ID, Nickname hoặc Username
+ */
+export function getUserByNicknameOrId(idOrNickname) {
+  if (!idOrNickname) return null;
+  const target = String(idOrNickname).trim();
+
+  // Kiểm tra nếu là Bot
+  if (MOCK_BOT_PROFILES[target]) {
+    return MOCK_BOT_PROFILES[target];
+  }
+  for (const bot of Object.values(MOCK_BOT_PROFILES)) {
+    if (bot.nickname.toLowerCase() === target.toLowerCase() || bot.username.toLowerCase() === target.toLowerCase()) {
+      return bot;
+    }
+  }
+
+  // Tra cứu trong Database
+  const stmt = db.prepare('SELECT * FROM users WHERE id = ? OR LOWER(nickname) = LOWER(?) OR LOWER(username) = LOWER(?)');
+  const record = stmt.get(target, target, target);
+  if (!record) return null;
+  return formatUserProfile(record);
+}
+
+/**
+ * Lấy bảng xếp hạng Top Người Chơi thực tế từ SQLite
+ */
+export function getLeaderboardData() {
+  const allUsers = db.prepare(`
+    SELECT * FROM users WHERE is_banned = 0
+  `).all().map(formatUserProfile);
+
+  // Kết hợp người chơi thật và Bot đại gia vào bảng xếp hạng
+  const combined = [...allUsers, ...Object.values(MOCK_BOT_PROFILES)];
+
+  const topXu = [...combined].sort((a, b) => (b.xu || 0) - (a.xu || 0)).slice(0, 15);
+  const topFish = [...combined].sort((a, b) => ((b.stats && b.stats.fishCaught) || 0) - ((a.stats && a.stats.fishCaught) || 0)).slice(0, 15);
+  const topFarm = [...combined].sort((a, b) => ((b.stats && b.stats.cropsHarvested) || 0) - ((a.stats && a.stats.cropsHarvested) || 0)).slice(0, 15);
+  const topLevel = [...combined].sort((a, b) => (b.level !== a.level ? (b.level || 0) - (a.level || 0) : (b.exp || 0) - (a.exp || 0))).slice(0, 15);
+
+  return {
+    topXu,
+    topFish,
+    topFarm,
+    topLevel,
+  };
+}
+

@@ -23,6 +23,7 @@ interface ParkAreaProps {
   user: UserProfile;
   onUpdateUser: (updatedUser: Partial<UserProfile>) => void;
   onShowMessage: (msg: string) => void;
+  onInspectPlayer?: (playerIdOrName: string, initialProfile?: any) => void;
 }
 
 interface ParkPlayer {
@@ -102,6 +103,7 @@ export const ParkArea: React.FC<ParkAreaProps> = ({
   user,
   onUpdateUser,
   onShowMessage,
+  onInspectPlayer,
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     { id: '1', senderName: 'Bé Mèo Dễ Thương', text: 'Chào mừng cả nhà đến với Công Viên Avatar! ✨', time: 'Vừa xong' },
@@ -497,23 +499,28 @@ export const ParkArea: React.FC<ParkAreaProps> = ({
             }}
             onClick={(e) => {
               e.stopPropagation();
-              setSelectedPlayer({
-                id: user.id,
-                nickname: user.nickname,
-                level: user.level,
-                role: user.role,
-                appearance: user.appearance,
-                vehicleId: user.equippedVehicleId,
-                equippedHouseId: user.equippedHouseId,
-                houses: user.houses,
-                xu: user.xu,
-                luong: user.luong,
-                stats: user.stats,
-                x: myPos.x,
-                y: myPos.y,
-                direction: myPos.direction,
-                isMoving: myPos.isMoving,
-              });
+              sounds.playClick();
+              if (onInspectPlayer) {
+                onInspectPlayer(user.id, user);
+              } else {
+                setSelectedPlayer({
+                  id: user.id,
+                  nickname: user.nickname,
+                  level: user.level,
+                  role: user.role,
+                  appearance: user.appearance,
+                  vehicleId: user.equippedVehicleId,
+                  equippedHouseId: user.equippedHouseId,
+                  houses: user.houses,
+                  xu: user.xu,
+                  luong: user.luong,
+                  stats: user.stats,
+                  x: myPos.x,
+                  y: myPos.y,
+                  direction: myPos.direction,
+                  isMoving: myPos.isMoving,
+                });
+              }
             }}
           >
             {/* Crown tag for self */}
@@ -539,7 +546,15 @@ export const ParkArea: React.FC<ParkAreaProps> = ({
           {Array.from(otherPlayers.values()).map((player) => (
             <div
               key={player.id}
-              onClick={(e) => { e.stopPropagation(); setSelectedPlayer(player); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                sounds.playClick();
+                if (onInspectPlayer) {
+                  onInspectPlayer(player.id || player.nickname, player);
+                } else {
+                  setSelectedPlayer(player);
+                }
+              }}
               className="absolute z-20 transition-all duration-500 ease-out cursor-pointer hover:scale-105"
               style={{
                 left: `${player.x}px`,
@@ -566,7 +581,15 @@ export const ParkArea: React.FC<ParkAreaProps> = ({
           {RESIDENT_BOTS.map((bot) => (
             <div
               key={bot.id}
-              onClick={(e) => { e.stopPropagation(); setSelectedPlayer(bot); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                sounds.playClick();
+                if (onInspectPlayer) {
+                  onInspectPlayer(bot.id || bot.nickname, bot);
+                } else {
+                  setSelectedPlayer(bot);
+                }
+              }}
               className="absolute z-20 cursor-pointer hover:scale-105 transition-transform"
               style={{
                 left: `${bot.x}px`,
@@ -595,7 +618,7 @@ export const ParkArea: React.FC<ParkAreaProps> = ({
               <span>KÊNH CHAT CÔNG VIÊN THỜI GIAN THỰC (HIỆN BÓNG THOẠI TRÊN ĐẦU):</span>
             </div>
             <span className="font-vt323 text-sm text-gray-400">
-              Tất cả mọi người đều nhìn thấy
+              Nhấn vào tên để Soi Đồ
             </span>
           </div>
 
@@ -604,7 +627,16 @@ export const ParkArea: React.FC<ParkAreaProps> = ({
             {messages.map((m) => (
               <div key={m.id} className="flex items-start gap-1.5">
                 <span className="text-gray-400 font-mono text-xs">[{m.time}]</span>
-                <span className="font-bold text-amber-300">{m.senderName}:</span>
+                <span 
+                  onClick={() => {
+                    sounds.playClick();
+                    if (onInspectPlayer) onInspectPlayer(m.senderName);
+                  }}
+                  className="font-bold text-amber-300 hover:text-yellow-200 hover:underline cursor-pointer"
+                  title="Nhấn để Soi Nhà Cửa & Kho Đồ"
+                >
+                  {m.senderName}:
+                </span>
                 <span className="text-gray-100 break-words">{m.text}</span>
               </div>
             ))}

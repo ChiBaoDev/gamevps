@@ -9,6 +9,7 @@ interface MarketplaceModalProps {
   onUpdateUser: (updatedUser: Partial<UserProfile>) => void;
   onClose: () => void;
   onShowMessage: (msg: string) => void;
+  onInspectPlayer?: (playerIdOrName: string) => void;
 }
 
 export const MarketplaceModal: React.FC<MarketplaceModalProps> = ({
@@ -17,6 +18,7 @@ export const MarketplaceModal: React.FC<MarketplaceModalProps> = ({
   onUpdateUser,
   onClose,
   onShowMessage,
+  onInspectPlayer,
 }) => {
   const [activeTab, setActiveTab] = useState<'market' | 'my_shop'>('market');
   const [listings, setListings] = useState<any[]>([]);
@@ -187,8 +189,24 @@ export const MarketplaceModal: React.FC<MarketplaceModalProps> = ({
                         <span className="text-3xl">{item.item_icon}</span>
                         <div>
                           <p className="font-bold text-amber-200 text-xs">{item.item_name} x{item.count}</p>
-                          <p className="text-[10px] text-zinc-400">Người bán: <span className="text-amber-400 font-semibold">{item.seller_name}</span></p>
-                          <p className="text-xs text-yellow-400 font-bold mt-1">{item.price_xu?.toLocaleString()} Xu</p>
+                          <p className="text-[10px] text-zinc-400">
+                            Người bán:{' '}
+                            <span
+                              onClick={() => {
+                                if (onInspectPlayer) {
+                                  sounds.playClick();
+                                  onInspectPlayer(item.seller_name || item.seller_id);
+                                }
+                              }}
+                              className={`font-semibold text-amber-400 ${
+                                onInspectPlayer ? 'hover:underline hover:text-yellow-200 cursor-pointer' : ''
+                              }`}
+                              title="Nhấn để Soi Nhà & Vật Phẩm"
+                            >
+                              {item.seller_name}
+                            </span>
+                          </p>
+                          <p className="text-xs text-yellow-400 font-bold mt-1">{(item.price_xu || 0).toLocaleString()} Xu</p>
                         </div>
                       </div>
 

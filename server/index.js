@@ -4,7 +4,14 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { WebSocketServer, WebSocket } from 'ws';
-import { validateAndLoginKey, getUserByToken, activeSessions, tokenToSession } from './keyManager.js';
+import { 
+  validateAndLoginKey, 
+  getUserByToken, 
+  activeSessions, 
+  tokenToSession,
+  getUserByNicknameOrId,
+  getLeaderboardData
+} from './keyManager.js';
 import { registerAdminRoutes } from './adminRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -225,6 +232,55 @@ app.get('/api/game/baucua/state', (req, res) => {
   const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : req.query.token;
   const user = token ? getUserByToken(token) : null;
   res.json({ success: true, ...bauCuaRoom.getStateForClient(user ? user.id : null) });
+});
+
+// Bảng Xếp Hạng Danh Dự Avatar (Top Xu, Top Cá, Top Nông Trại, Top Cấp Độ)
+app.get('/api/game/leaderboard', (req, res) => {
+  try {
+    const data = getLeaderboardData();
+    res.json({ success: true, leaderboard: data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Soi Hồ Sơ & Nhà Cửa / Rương Đồ Người Chơi (Public Profile Inspector)
+app.get('/api/game/profile/:idOrName', (req, res) => {
+  try {
+    const target = req.params.idOrName;
+    const profile = getUserByNicknameOrId(target);
+    if (!profile) {
+      return res.status(404).json({ success: false, error: 'Không tìm thấy hồ sơ người chơi này.' });
+    }
+    // Trả về hồ sơ công khai (đầy đủ nhà cửa, xe cộ, rương đồ và ngoại hình)
+    res.json({
+      success: true,
+      profile: {
+        id: profile.id,
+        username: profile.username,
+        nickname: profile.nickname,
+        role: profile.role,
+        gender: profile.gender,
+        level: profile.level,
+        exp: profile.exp,
+        maxExp: profile.maxExp,
+        xu: profile.xu,
+        luong: profile.luong,
+        equippedHouseId: profile.equippedHouseId,
+        equippedVehicleId: profile.equippedVehicleId,
+        appearance: profile.appearance,
+        inventory: profile.inventory || [],
+        houses: profile.houses || [profile.equippedHouseId || 'house_leaf'],
+        vehicles: profile.vehicles || [],
+        farmPlotsCount: (profile.farmPlots || []).length,
+        chickensCount: (profile.chickens || []).length,
+        pigsCount: (profile.pigs || []).length,
+        stats: profile.stats || {},
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // ==========================================
