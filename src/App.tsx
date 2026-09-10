@@ -56,6 +56,26 @@ export default function App() {
   // Floating in-game notification toast
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Online Players Count
+  const [onlineCount, setOnlineCount] = useState<number>(1);
+
+  // Fetch online count periodically
+  useEffect(() => {
+    const fetchOnline = () => {
+      fetch('/api/online-count')
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.success && data.onlineCount !== undefined) {
+            setOnlineCount(data.onlineCount);
+          }
+        })
+        .catch(() => {});
+    };
+    fetchOnline();
+    const interval = setInterval(fetchOnline, 12000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Auto-login on mount if token exists in server
   useEffect(() => {
     const savedToken = localStorage.getItem('game_auth_token');
@@ -71,29 +91,33 @@ export default function App() {
             setIsLoggedIn(true);
           } else {
             localStorage.removeItem('game_auth_token');
-            setIsLoggedIn(false);
           }
         })
         .catch(() => {
-          // If server is not ready or offline
+          localStorage.removeItem('game_auth_token');
         });
     }
   }, []);
 
 
-  // Sync user state to localStorage
+  // Sync user state to localStorage and React state
   const handleUpdateUser = useCallback((partial: Partial<UserProfile>) => {
     setUser((prev) => {
       if (!prev) return prev;
       const updated: UserProfile = { ...prev, ...partial };
       try {
         localStorage.setItem(`avatar_user_${updated.username}`, JSON.stringify(updated));
-      } catch {
-        // LocalStorage quota safety
-      }
+      } catch {}
       return updated;
     });
   }, []);
+
+  // Sync state to LocalStorage
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem(`avatar_user_${user.username}`, JSON.stringify(user));
+    }
+  }, [user]);
 
   // Toast feedback helper
   const showMessage = useCallback((msg: string) => {
@@ -114,9 +138,9 @@ export default function App() {
     setInspectedPlayer({ idOrName, initialProfile });
   }, []);
 
-  // Periodic passive energy recovery (1 energy every 25 seconds)
+  // Periodic energy regeneration
   useEffect(() => {
-    if (!isLoggedIn || !user) return;
+    if (!isLoggedIn) return;
     const interval = setInterval(() => {
       setUser((current) => {
         if (!current) return current;
@@ -129,7 +153,7 @@ export default function App() {
       });
     }, 25000);
     return () => clearInterval(interval);
-  }, [isLoggedIn, user?.username]);
+  }, [isLoggedIn]);
 
   // Handle login callback
   const handleLoginSuccess = useCallback((loggedInUser: UserProfile, receivedToken: string) => {
@@ -150,7 +174,7 @@ export default function App() {
     showMessage('Bạn đã đăng xuất khỏi game.');
   }, [showMessage]);
 
-  // WebSocket Live Connection for Chat, Kick & Announcements
+  // WebSocket Live Connection for Chat, Kick & Announcements & Online Count
   useEffect(() => {
     if (!isLoggedIn || !token) return;
 
@@ -164,6 +188,12 @@ export default function App() {
       socket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          if (data.onlineCount !== undefined) {
+            setOnlineCount(data.onlineCount);
+          } else if (data.count !== undefined && data.type === 'ONLINE_COUNT_UPDATE') {
+            setOnlineCount(data.count);
+          }
+
           if (data.type === 'KICK_DUPLICATE_LOGIN' || data.type === 'KICKED_BY_ADMIN') {
             alert(data.message || 'Tài khoản của bạn đã bị ngắt kết nối.');
             handleLogout();
@@ -228,6 +258,7 @@ export default function App() {
             onOpenAdmin={() => setShowAdmin(true)}
             onLogout={handleLogout}
             unclaimedQuestsCount={unclaimedQuestsCount}
+            onlineCount={onlineCount}
           />
 
           {/* Floating Toast Notification */}
@@ -270,6 +301,7 @@ export default function App() {
             {currentArea === 'park' && (
               <ParkArea
                 user={user}
+                token={token}
                 onUpdateUser={handleUpdateUser}
                 onShowMessage={showMessage}
                 onInspectPlayer={handleInspectPlayer}

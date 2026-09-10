@@ -21,6 +21,7 @@ import {
 
 interface ParkAreaProps {
   user: UserProfile;
+  token?: string;
   onUpdateUser: (updatedUser: Partial<UserProfile>) => void;
   onShowMessage: (msg: string) => void;
   onInspectPlayer?: (playerIdOrName: string, initialProfile?: any) => void;
@@ -49,6 +50,7 @@ interface ParkPlayer {
 
 export const ParkArea: React.FC<ParkAreaProps> = ({
   user,
+  token,
   onUpdateUser,
   onShowMessage,
   onInspectPlayer,
@@ -72,21 +74,50 @@ export const ParkArea: React.FC<ParkAreaProps> = ({
   const moveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
-  // Connect WebSocket for Realtime Park
+  // 1. Tải danh sách người chơi tức thì qua REST API (để người vô sau thấy ngay người vô trước)
   useEffect(() => {
-    const token = localStorage.getItem('game_auth_token') || '';
+    const fetchParkPlayers = async () => {
+      try {
+        const res = await fetch('/api/game/park/players');
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.players)) {
+          setOtherPlayers((prev) => {
+            const map = new Map(prev);
+            data.players.forEach((p: ParkPlayer) => {
+              if (p.id !== user.id) {
+                map.set(p.id, p);
+              }
+            });
+            return map;
+          });
+        }
+      } catch {}
+    };
+
+    fetchParkPlayers();
+    const pollInterval = setInterval(fetchParkPlayers, 8000);
+    return () => clearInterval(pollInterval);
+  }, [user.id]);
+
+  // 2. Kết nối WebSocket Realtime Park
+  useEffect(() => {
+    const authToken = token || localStorage.getItem('game_auth_token') || '';
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.hostname}:3000/ws?token=${token}`;
+    const wsUrl = `${protocol}//${window.location.host}/ws?token=${authToken}`;
 
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
     ws.onopen = () => {
-      // Send PARK_JOIN to announce presence
+      // Gửi PARK_JOIN kèm đầy đủ thông tin vị trí & avatar
       ws.send(JSON.stringify({
         type: 'PARK_JOIN',
+        token: authToken,
+        userId: user.id,
+        user: user,
         x: myPos.x,
         y: myPos.y,
+        direction: myPos.direction,
       }));
     };
 
@@ -94,6 +125,7 @@ export const ParkArea: React.FC<ParkAreaProps> = ({
       try {
         const data = JSON.parse(event.data);
 
+        // Đồng bộ toàn bộ người chơi khi nhận PARK_SYNC_ALL
         if (data.type === 'PARK_SYNC_ALL') {
           const map = new Map<string, ParkPlayer>();
           if (Array.isArray(data.players)) {
@@ -106,6 +138,7 @@ export const ParkArea: React.FC<ParkAreaProps> = ({
           setOtherPlayers(map);
         }
 
+        // Khi có người chơi mới bước vào công viên
         if (data.type === 'PARK_PLAYER_JOINED') {
           const p = data.player;
           if (p && p.id !== user.id) {
@@ -114,10 +147,11 @@ export const ParkArea: React.FC<ParkAreaProps> = ({
               next.set(p.id, p);
               return next;
             });
-            onShowMessage(`👋 Người chơi [${p.nickname}] vừa bước vào Công Viên!`);
+            onShowMessage(`👋 [${p.nickname}] vừa bước vào Công Viên!`);
           }
         }
 
+        // Khi một người chơi di chuyển
         if (data.type === 'PARK_PLAYER_MOVED') {
           if (data.userId && data.userId !== user.id) {
             setOtherPlayers((prev) => {
@@ -137,6 +171,7 @@ export const ParkArea: React.FC<ParkAreaProps> = ({
           }
         }
 
+        // Khi có tin nhắn chat trong công viên
         if (data.type === 'PARK_CHAT_BROADCAST') {
           const newMsg: ChatMessage = {
             id: data.id || Date.now().toString(),

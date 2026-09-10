@@ -53,6 +53,27 @@ export function broadcastGlobalMessage(payload) {
   }
 }
 
+/**
+ * Hàm gửi cập nhật số người đang online cho tất cả client
+ */
+export function broadcastOnlineCount() {
+  const onlineCount = Math.max(1, activeSessions.size);
+  broadcastGlobalMessage({
+    type: 'ONLINE_COUNT_UPDATE',
+    onlineCount,
+    activeSessions: activeSessions.size,
+  });
+}
+
+// 0. API Lấy số người đang Online Realtime
+app.get('/api/online-count', (req, res) => {
+  res.json({
+    success: true,
+    onlineCount: Math.max(1, activeSessions.size),
+    activeSessions: activeSessions.size,
+  });
+});
+
 // 1. API Xác Thực Bằng Key
 app.post('/api/auth/login-key', (req, res) => {
   const { keyCode } = req.body;
@@ -60,6 +81,7 @@ app.post('/api/auth/login-key', (req, res) => {
   if (!result.success) {
     return res.status(400).json(result);
   }
+  broadcastOnlineCount();
   return res.json(result);
 });
 
@@ -376,12 +398,15 @@ wss.on('connection', (ws, req) => {
   ws.isAlive = true;
   ws.on('pong', () => { ws.isAlive = true; });
 
-  // Gửi thông báo chào mừng & kết nối thành công
+  // Gửi thông báo chào mừng & kết nối thành công kèm số lượng online
   ws.send(JSON.stringify({
     type: 'CONNECTED',
     message: 'Kết nối máy chủ game thành công!',
     user: sessionUser,
+    onlineCount: Math.max(1, activeSessions.size),
   }));
+
+  broadcastOnlineCount();
 
   // Xử lý tin nhắn từ Client
   ws.on('message', (messageRaw) => {
@@ -400,7 +425,8 @@ wss.on('connection', (ws, req) => {
           if (activeSessions.has(user.keyCode)) {
             activeSessions.get(user.keyCode).socket = ws;
           }
-          ws.send(JSON.stringify({ type: 'AUTH_SUCCESS', user }));
+          ws.send(JSON.stringify({ type: 'AUTH_SUCCESS', user, onlineCount: Math.max(1, activeSessions.size) }));
+          broadcastOnlineCount();
         } else {
           ws.send(JSON.stringify({ type: 'AUTH_FAILED', error: 'Token không hợp lệ.' }));
         }
@@ -433,48 +459,69 @@ wss.on('connection', (ws, req) => {
       // XỬ LÝ CÔNG VIÊN (PARK REALTIME MULTIPLAYER)
       // ==========================================
       if (msg.type === 'PARK_JOIN') {
-        if (!sessionUser) return;
+        let u = sessionUser;
+        if (!u && msg.token) {
+          u = getUserByToken(msg.token);
+          if (u) sessionUser = u;
+        }
+        if (!u && msg.userId) {
+          u = getUserById(msg.userId);
+          if (u) sessionUser = u;
+        }
+        if (!u && msg.user && msg.user.id) {
+          u = msg.user;
+          sessionUser = u;
+        }
+
+        if (!u) {
+          console.warn('[WS] PARK_JOIN thất bại: Không xác định được người chơi.');
+          return;
+        }
+
         const playerObj = {
-          id: sessionUser.id,
-          nickname: sessionUser.nickname,
-          level: sessionUser.level,
-          role: sessionUser.role,
-          gender: sessionUser.gender,
-          appearance: sessionUser.appearance,
-          vehicleId: sessionUser.equippedVehicleId || '',
-          equippedHouseId: sessionUser.equippedHouseId || 'house_leaf',
-          houses: sessionUser.houses || ['house_leaf'],
-          xu: sessionUser.xu || 0,
-          luong: sessionUser.luong || 0,
-          stats: sessionUser.stats || {},
-          x: msg.x || (200 + Math.floor(Math.random() * 400)),
-          y: msg.y || (150 + Math.floor(Math.random() * 200)),
-          direction: 'right',
+          id: u.id,
+          nickname: u.nickname,
+          level: u.level || 1,
+          role: u.role || 'player',
+          gender: u.gender || 'male',
+          appearance: u.appearance,
+          vehicleId: u.equippedVehicleId || '',
+          equippedHouseId: u.equippedHouseId || 'house_leaf',
+          houses: u.houses || ['house_leaf'],
+          xu: u.xu || 0,
+          luong: u.luong || 0,
+          stats: u.stats || {},
+          x: msg.x !== undefined ? msg.x : (350 + Math.floor(Math.random() * 300)),
+          y: msg.y !== undefined ? msg.y : (250 + Math.floor(Math.random() * 200)),
+          direction: msg.direction || 'right',
           isMoving: false,
           speechBubble: null,
           lastSeen: Date.now(),
         };
 
-        parkPlayers.set(sessionUser.id, playerObj);
+        // Ghi nhận vào Map phòng công viên
+        parkPlayers.set(u.id, playerObj);
 
-        // Gửi toàn bộ danh sách cho người vừa vào
+        // 1. Phản hồi toàn bộ danh sách người chơi hiện có cho người vừa vào
         ws.send(JSON.stringify({
           type: 'PARK_SYNC_ALL',
           players: Array.from(parkPlayers.values()),
         }));
 
-        // Báo cho những người khác biết
+        // 2. Broadcast cho tất cả những người khác biết người mới đã vào
         broadcastGlobalMessage({
           type: 'PARK_PLAYER_JOINED',
           player: playerObj,
         });
-        updateQuestProgress(sessionUser.id, 'park_interact', 1);
+
+        updateQuestProgress(u.id, 'park_interact', 1);
         return;
       }
 
       if (msg.type === 'PARK_MOVE') {
-        if (!sessionUser) return;
-        const player = parkPlayers.get(sessionUser.id);
+        const userId = sessionUser ? sessionUser.id : msg.userId;
+        if (!userId) return;
+        const player = parkPlayers.get(userId);
         if (player) {
           player.x = msg.x;
           player.y = msg.y;
@@ -485,7 +532,7 @@ wss.on('connection', (ws, req) => {
           // Broadcast vị trí mới cho tất cả
           broadcastGlobalMessage({
             type: 'PARK_PLAYER_MOVED',
-            userId: sessionUser.id,
+            userId: userId,
             x: player.x,
             y: player.y,
             direction: player.direction,
@@ -496,8 +543,9 @@ wss.on('connection', (ws, req) => {
       }
 
       if (msg.type === 'PARK_CHAT') {
-        if (!sessionUser || !msg.text) return;
-        const player = parkPlayers.get(sessionUser.id);
+        const sender = sessionUser || (msg.user ? msg.user : null);
+        if (!sender || !msg.text) return;
+        const player = parkPlayers.get(sender.id);
         if (player) {
           player.speechBubble = msg.text;
         }
@@ -505,32 +553,34 @@ wss.on('connection', (ws, req) => {
         broadcastGlobalMessage({
           type: 'PARK_CHAT_BROADCAST',
           id: Date.now().toString(),
-          senderId: sessionUser.id,
-          senderName: sessionUser.nickname,
+          senderId: sender.id,
+          senderName: sender.nickname,
           text: msg.text,
           time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
         });
-        updateQuestProgress(sessionUser.id, 'park_interact', 1);
+        updateQuestProgress(sender.id, 'park_interact', 1);
         return;
       }
 
       if (msg.type === 'PARK_EMOTE') {
-        if (!sessionUser) return;
+        const sender = sessionUser || (msg.user ? msg.user : null);
+        if (!sender) return;
         broadcastGlobalMessage({
           type: 'PARK_EMOTE_BROADCAST',
-          senderId: sessionUser.id,
-          senderName: sessionUser.nickname,
+          senderId: sender.id,
+          senderName: sender.nickname,
           emote: msg.emote || 'heart',
         });
         return;
       }
 
       if (msg.type === 'PARK_LEAVE') {
-        if (sessionUser && parkPlayers.has(sessionUser.id)) {
-          parkPlayers.delete(sessionUser.id);
+        const userId = sessionUser ? sessionUser.id : msg.userId;
+        if (userId && parkPlayers.has(userId)) {
+          parkPlayers.delete(userId);
           broadcastGlobalMessage({
             type: 'PARK_PLAYER_LEFT',
-            userId: sessionUser.id,
+            userId: userId,
           });
         }
         return;
@@ -541,13 +591,23 @@ wss.on('connection', (ws, req) => {
   });
 
   ws.on('close', () => {
-    if (sessionUser && activeSessions.has(sessionUser.keyCode)) {
-      const session = activeSessions.get(sessionUser.keyCode);
-      if (session.socket === ws) {
-        // Giữ phiên trong 60s để cho phép reconnect trước khi giải phóng RAM
-        session.socket = null;
+    if (sessionUser) {
+      if (activeSessions.has(sessionUser.keyCode)) {
+        const session = activeSessions.get(sessionUser.keyCode);
+        if (session && session.socket === ws) {
+          session.socket = null;
+        }
+      }
+
+      if (parkPlayers.has(sessionUser.id)) {
+        parkPlayers.delete(sessionUser.id);
+        broadcastGlobalMessage({
+          type: 'PARK_PLAYER_LEFT',
+          userId: sessionUser.id,
+        });
       }
     }
+    broadcastOnlineCount();
   });
 });
 

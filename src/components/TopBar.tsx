@@ -12,7 +12,8 @@ import {
   Zap, 
   LogOut,
   Tv,
-  ShieldAlert
+  ShieldAlert,
+  Users
 } from 'lucide-react';
 
 interface TopBarProps {
@@ -26,6 +27,7 @@ interface TopBarProps {
   onOpenAdmin?: () => void;
   onLogout: () => void;
   unclaimedQuestsCount: number;
+  onlineCount?: number;
   isScanlines?: boolean;
   onToggleScanlines?: () => void;
 }
@@ -42,6 +44,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenAdmin,
   onLogout,
   unclaimedQuestsCount,
+  onlineCount = 1,
   isScanlines = false,
   onToggleScanlines,
 }) => {
@@ -68,7 +71,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           {/* Name & EXP & Energy bars */}
           <div className="flex flex-col min-w-[110px] sm:min-w-[140px]">
             <div className="flex items-center gap-1.5">
-              <span className="font-pixel text-[11px] sm:text-xs text-amber-200 truncate max-w-[100px] sm:max-w-[130px] pixel-shadow-sm">
+              <span className="font-pixel text-[11px] sm:text-xs text-amber-200 truncate max-w-[90px] sm:max-w-[120px] pixel-shadow-sm">
                 {user.nickname}
               </span>
               <span className="bg-[#170a04] text-amber-400 text-[8px] font-pixel px-1 py-0.5 border border-amber-800">
@@ -106,8 +109,19 @@ export const TopBar: React.FC<TopBarProps> = ({
           </div>
         </div>
 
-        {/* Center: Currency Displays (Xu and Lượng) */}
-        <div className="flex items-center gap-2 sm:gap-4">
+        {/* Center: Currency Displays & Online Counter */}
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          {/* Online Counter Badge */}
+          <div className="flex items-center gap-1.5 bg-[#0a1708] border border-emerald-500/80 px-2 sm:px-2.5 py-1.5 rounded shadow-inner">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="font-pixel text-[8px] sm:text-[9px] text-emerald-300 font-bold whitespace-nowrap">
+              {onlineCount} Online
+            </span>
+          </div>
+
           {/* Xu (Coins) */}
           <div className="flex items-center gap-2 bg-[#120703] border-2 border-yellow-600/80 px-2.5 sm:px-3 py-1.5 pixel-box-gold">
             <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400 animate-pulse fill-yellow-500/40" />
