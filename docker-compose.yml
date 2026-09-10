@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  gamevps:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gamevps_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+    volumes:
+      - ./data:/app/data
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '1.0'
