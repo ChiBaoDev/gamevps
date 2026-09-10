@@ -140,7 +140,9 @@ class BauCuaRoom {
     const results = this.dice;
     let totalPayoutCalculated = 0;
 
-    const transaction = db.transaction(() => {
+    try {
+      db.exec('BEGIN');
+
       for (const [userId, userBetInfo] of this.betsByUser.entries()) {
         let totalWinXu = 0;
         let totalBetXu = 0;
@@ -192,11 +194,10 @@ class BauCuaRoom {
           `).run(1, userId, userBetInfo.nickname || 'Người chơi', JSON.stringify(userBetInfo), totalBetXu, totalWinXu);
         } catch {}
       }
-    });
 
-    try {
-      transaction();
+      db.exec('COMMIT');
     } catch (e) {
+      try { db.exec('ROLLBACK'); } catch {}
       console.error('[BauCua] Lỗi transaction trả thưởng:', e);
     }
   }
