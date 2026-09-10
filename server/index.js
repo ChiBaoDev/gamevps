@@ -227,11 +227,44 @@ app.get('/api/game/baucua/state', (req, res) => {
   res.json({ success: true, ...bauCuaRoom.getStateForClient(user ? user.id : null) });
 });
 
-// Bầu Cua: Đặt cược
-app.post('/api/game/baucua/bet', requireUser, (req, res) => {
-  const { mascot, amount } = req.body;
-  const result = bauCuaRoom.placeBet(req.user.id, mascot, Number(amount));
-  res.json(result);
+// ==========================================
+// REALTIME CÔNG VIÊN (PARK PLAZA) MULTIPLAYER
+// ==========================================
+const parkPlayers = new Map(); // userId -> { id, nickname, level, role, appearance, vehicleId, x, y, direction, isMoving, lastChat }
+
+// REST endpoint lấy danh sách người chơi trong công viên
+app.get('/api/game/park/players', (req, res) => {
+  res.json({ success: true, players: Array.from(parkPlayers.values()) });
+});
+
+// Xử lý ném xu cầu may đài phun nước qua REST
+app.post('/api/game/park/wish', requireUser, (req, res) => {
+  if (req.user.xu < 10) return res.status(400).json({ success: false, error: 'Bạn cần ít nhất 10 Xu để ném xu ước nguyện!' });
+  updateUserBalance(req.user.id, -10, 0);
+
+  const roll = Math.random() * 100;
+  let rewardText = '';
+  if (roll < 40) {
+    rewardText = 'Nhận được +10 EXP may mắn từ Thần Nước!';
+    saveUserProfile(req.user.id, { exp: req.user.exp + 10 });
+  } else if (roll < 75) {
+    rewardText = 'Thần Nước trả lại 50 Xu tài lộc!';
+    updateUserBalance(req.user.id, 50, 0);
+  } else if (roll < 95) {
+    rewardText = '🎉 Đại Cát! Nhận được 1 LƯỢNG từ giếng ước!';
+    updateUserBalance(req.user.id, 0, 1);
+  } else {
+    rewardText = '🌟 ĐẠI PHÚC ĐẠI QUÝ! Trúng 300 Xu từ Thần Long!';
+    updateUserBalance(req.user.id, 300, 0);
+  }
+
+  broadcastGlobalMessage({
+    type: 'PARK_WISH_BROADCAST',
+    senderName: req.user.nickname,
+    prizeText: rewardText,
+  });
+
+  res.json({ success: true, user: getUserById(req.user.id), message: rewardText });
 });
 
 
@@ -321,16 +354,109 @@ wss.on('connection', (ws, req) => {
         return;
       }
 
-      // Xử lý chat công viên
-      if (msg.type === 'CHAT_MESSAGE') {
+      // ==========================================
+      // XỬ LÝ CÔNG VIÊN (PARK REALTIME MULTIPLAYER)
+      // ==========================================
+      if (msg.type === 'PARK_JOIN') {
         if (!sessionUser) return;
+        const playerObj = {
+          id: sessionUser.id,
+          nickname: sessionUser.nickname,
+          level: sessionUser.level,
+          role: sessionUser.role,
+          gender: sessionUser.gender,
+          appearance: sessionUser.appearance,
+          vehicleId: sessionUser.equippedVehicleId || '',
+          equippedHouseId: sessionUser.equippedHouseId || 'house_leaf',
+          houses: sessionUser.houses || ['house_leaf'],
+          xu: sessionUser.xu || 0,
+          luong: sessionUser.luong || 0,
+          stats: sessionUser.stats || {},
+          x: msg.x || (200 + Math.floor(Math.random() * 400)),
+          y: msg.y || (150 + Math.floor(Math.random() * 200)),
+          direction: 'right',
+          isMoving: false,
+          speechBubble: null,
+          lastSeen: Date.now(),
+        };
+
+        parkPlayers.set(sessionUser.id, playerObj);
+
+        // Gửi toàn bộ danh sách cho người vừa vào
+        ws.send(JSON.stringify({
+          type: 'PARK_SYNC_ALL',
+          players: Array.from(parkPlayers.values()),
+        }));
+
+        // Báo cho những người khác biết
         broadcastGlobalMessage({
-          type: 'CHAT_BROADCAST',
+          type: 'PARK_PLAYER_JOINED',
+          player: playerObj,
+        });
+        return;
+      }
+
+      if (msg.type === 'PARK_MOVE') {
+        if (!sessionUser) return;
+        const player = parkPlayers.get(sessionUser.id);
+        if (player) {
+          player.x = msg.x;
+          player.y = msg.y;
+          player.direction = msg.direction || 'right';
+          player.isMoving = !!msg.isMoving;
+          player.lastSeen = Date.now();
+
+          // Broadcast vị trí mới cho tất cả
+          broadcastGlobalMessage({
+            type: 'PARK_PLAYER_MOVED',
+            userId: sessionUser.id,
+            x: player.x,
+            y: player.y,
+            direction: player.direction,
+            isMoving: player.isMoving,
+          });
+        }
+        return;
+      }
+
+      if (msg.type === 'PARK_CHAT') {
+        if (!sessionUser || !msg.text) return;
+        const player = parkPlayers.get(sessionUser.id);
+        if (player) {
+          player.speechBubble = msg.text;
+        }
+
+        broadcastGlobalMessage({
+          type: 'PARK_CHAT_BROADCAST',
           id: Date.now().toString(),
+          senderId: sessionUser.id,
           senderName: sessionUser.nickname,
           text: msg.text,
           time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
         });
+        return;
+      }
+
+      if (msg.type === 'PARK_EMOTE') {
+        if (!sessionUser) return;
+        broadcastGlobalMessage({
+          type: 'PARK_EMOTE_BROADCAST',
+          senderId: sessionUser.id,
+          senderName: sessionUser.nickname,
+          emote: msg.emote || 'heart',
+        });
+        return;
+      }
+
+      if (msg.type === 'PARK_LEAVE') {
+        if (sessionUser && parkPlayers.has(sessionUser.id)) {
+          parkPlayers.delete(sessionUser.id);
+          broadcastGlobalMessage({
+            type: 'PARK_PLAYER_LEFT',
+            userId: sessionUser.id,
+          });
+        }
+        return;
       }
     } catch (e) {
       console.error('[WS] Lỗi xử lý tin nhắn:', e);

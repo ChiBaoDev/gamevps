@@ -12,6 +12,7 @@ interface CharacterSpriteProps {
   speechBubble?: string | null;
   direction?: 'left' | 'right';
   showNameTag?: boolean;
+  vehicleId?: string;
 }
 
 export const CharacterSprite: React.FC<CharacterSpriteProps> = ({
@@ -25,6 +26,7 @@ export const CharacterSprite: React.FC<CharacterSpriteProps> = ({
   speechBubble,
   direction = 'right',
   showNameTag = true,
+  vehicleId,
 }) => {
   const {
     skinColor = '#fcd34d',
@@ -217,6 +219,72 @@ export const CharacterSprite: React.FC<CharacterSpriteProps> = ({
               <circle cx="79" cy="62" r="1.5" fill="#38bdf8" />
               <circle cx="81" cy="66" r="1.5" fill="#38bdf8" />
               <circle cx="83" cy="70" r="1.5" fill="#38bdf8" />
+            </g>
+          )}
+
+          {/* Vehicle / Mount Overlays */}
+          {vehicleId === 'veh_bicycle' && (
+            <g>
+              {/* Wheels */}
+              <circle cx="20" cy="86" r="8" fill="none" stroke="#64748b" strokeWidth="2" />
+              <circle cx="60" cy="86" r="8" fill="none" stroke="#64748b" strokeWidth="2" />
+              <line x1="20" y1="86" x2="40" y2="76" stroke="#0284c7" strokeWidth="2.5" />
+              <line x1="60" y1="86" x2="40" y2="76" stroke="#0284c7" strokeWidth="2.5" />
+              <line x1="40" y1="76" x2="40" y2="68" stroke="#0284c7" strokeWidth="2" />
+              {/* Handlebar */}
+              <line x1="56" y1="64" x2="64" y2="64" stroke="#e2e8f0" strokeWidth="2.5" />
+            </g>
+          )}
+
+          {vehicleId === 'veh_cub50' && (
+            <g>
+              {/* Cub 50cc chassis */}
+              <circle cx="18" cy="86" r="7" fill="#1e293b" stroke="#94a3b8" strokeWidth="2" />
+              <circle cx="62" cy="86" r="7" fill="#1e293b" stroke="#94a3b8" strokeWidth="2" />
+              <path d="M16,84 L36,80 L52,72 L64,74 L62,86 Z" fill="#0284c7" stroke="#0369a1" strokeWidth="1.5" />
+              <rect x="58" y="66" width="6" height="5" fill="#fef08a" />
+              {isMoving && <text x="6" y="85" fontSize="10" className="animate-pulse">💨</text>}
+            </g>
+          )}
+
+          {vehicleId === 'veh_sh' && (
+            <g>
+              {/* Vespa / SH chassis */}
+              <circle cx="16" cy="86" r="8" fill="#0f172a" stroke="#e2e8f0" strokeWidth="2" />
+              <circle cx="64" cy="86" r="8" fill="#0f172a" stroke="#e2e8f0" strokeWidth="2" />
+              <path d="M14,84 L32,76 L54,68 L68,72 L66,86 Z" fill="#dc2626" stroke="#991b1b" strokeWidth="1.5" />
+              <circle cx="66" cy="68" r="4" fill="#fef08a" />
+              {isMoving && <text x="4" y="86" fontSize="11" className="animate-pulse">💨</text>}
+            </g>
+          )}
+
+          {vehicleId === 'veh_supercar' && (
+            <g>
+              {/* Lambo pixel sports car */}
+              <rect x="6" y="74" width="68" height="14" fill="#e11d48" rx="3" stroke="#881337" strokeWidth="1.5" />
+              <polygon points="20,74 32,62 58,62 66,74" fill="#38bdf8" opacity="0.8" />
+              <circle cx="20" cy="88" r="6" fill="#0f172a" stroke="#facc15" strokeWidth="2" />
+              <circle cx="60" cy="88" r="6" fill="#0f172a" stroke="#facc15" strokeWidth="2" />
+              {isMoving && <rect x="2" y="84" width="12" height="4" fill="#f59e0b" className="animate-ping" />}
+            </g>
+          )}
+
+          {vehicleId === 'veh_ufo' && (
+            <g className="animate-pulse">
+              {/* Alien UFO */}
+              <ellipse cx="40" cy="82" rx="36" ry="10" fill="#334155" stroke="#38bdf8" strokeWidth="2" />
+              <ellipse cx="40" cy="78" rx="20" ry="8" fill="#06b6d4" opacity="0.7" />
+              <circle cx="20" cy="84" r="2.5" fill="#22c55e" />
+              <circle cx="40" cy="86" r="2.5" fill="#facc15" />
+              <circle cx="60" cy="84" r="2.5" fill="#22c55e" />
+            </g>
+          )}
+
+          {vehicleId === 'veh_pegasus' && (
+            <g>
+              {/* Golden Dragon / Pegasus mount */}
+              <ellipse cx="40" cy="80" rx="24" ry="12" fill="#fbbf24" stroke="#d97706" strokeWidth="2" />
+              <text x="56" y="80" fontSize="16" className="filter drop-shadow">🐉</text>
             </g>
           )}
         </svg>
