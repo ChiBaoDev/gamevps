@@ -1,5 +1,6 @@
 import { db } from './db.js';
 import { getUserById, saveUserProfile, updateUserBalance, activeSessions } from './keyManager.js';
+import { updateQuestProgress } from './questEngine.js';
 
 // Quản lý các phiên giao dịch trực tiếp 1-1 đang diễn ra trong RAM
 export const activeTrades = new Map(); // tradeId -> { id, userA: { id, name, items: [], xu: 0, locked: false, confirmed: false }, userB: { id, name, items: [], xu: 0, locked: false, confirmed: false }, status: 'open' }
@@ -136,6 +137,9 @@ export function confirmTradeOffer(tradeId, userId) {
     saveUserProfile(userB.id, { inventory: invB });
 
     trade.status = 'completed';
+    updateQuestProgress(userA.id, 'market_trade', 1);
+    updateQuestProgress(userB.id, 'market_trade', 1);
+
     broadcastTradeEvent(trade, {
       type: 'TRADE_COMPLETED',
       message: 'Giao dịch thành công mỹ mãn! Đồ và Xu đã được chuyển vào túi của cả hai.',
@@ -192,6 +196,7 @@ export function listMarketplaceItem(userId, itemId, count = 1, priceXu = 100) {
   insertStmt.run(user.id, user.nickname, item.id, item.name, item.type || 'item', item.icon || '📦', count, priceXu);
 
   saveUserProfile(user.id, { inventory });
+  updateQuestProgress(userId, 'market_trade', 1);
   return { success: true, user: getUserById(userId), message: `Đã treo bán ${count}x ${item.name} lên Chợ Đêm với giá ${priceXu.toLocaleString()} Xu!` };
 }
 
@@ -236,6 +241,9 @@ export function buyMarketplaceItem(buyerUserId, listingId) {
   // Cập nhật trạng thái listing
   db.prepare('UPDATE marketplace_listings SET status = "sold", buyer_id = ?, buyer_name = ?, sold_at = CURRENT_TIMESTAMP WHERE id = ?')
     .run(buyer.id, buyer.nickname, listingId);
+
+  updateQuestProgress(buyerUserId, 'market_trade', 1);
+  updateQuestProgress(listing.seller_id, 'market_trade', 1);
 
   return { success: true, user: getUserById(buyerUserId), message: `Mua thành công ${listing.count}x ${listing.item_name}!` };
 }

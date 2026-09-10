@@ -392,6 +392,8 @@ export function handleBuyHouse(userId, houseId) {
     maxEnergy: houseDef.maxEnergy,
   });
 
+  updateQuestProgress(userId, 'buy_house', 1);
+
   return { success: true, user: getUserById(userId), message: `Chúc mừng bạn đã sở hữu ${houseDef.name}! Max Energy tăng lên ${houseDef.maxEnergy}.` };
 }
 
@@ -421,6 +423,8 @@ export function handleBuyVehicle(userId, vehicleId) {
     vehicles,
     equippedVehicleId: vehicleId,
   });
+
+  updateQuestProgress(userId, 'buy_vehicle', 1);
 
   return { success: true, user: getUserById(userId), message: `Chúc mừng bạn đã sở hữu ${vehDef.name}!` };
 }
@@ -511,6 +515,7 @@ export function handleBuyAnimal(userId, animalType) {
     };
     chickens.push(newChicken);
     saveUserProfile(userId, { chickens });
+    updateQuestProgress(userId, 'buy_chicken', 1);
     return { success: true, user: getUserById(userId), message: 'Mua thành công 1 Gà con vào chuồng!' };
   } else if (animalType === 'pig') {
     if (pigs.length >= 4) {
@@ -531,6 +536,7 @@ export function handleBuyAnimal(userId, animalType) {
     };
     pigs.push(newPig);
     saveUserProfile(userId, { pigs });
+    updateQuestProgress(userId, 'buy_pig', 1);
     return { success: true, user: getUserById(userId), message: 'Mua thành công 1 Heo con vào chuồng!' };
   }
 
@@ -574,6 +580,7 @@ export function handleFeedAnimal(userId, animalType, animalId) {
     chicken.eggsReady = false;
 
     saveUserProfile(userId, { chickens, inventory });
+    updateQuestProgress(userId, 'feed_animal', 1);
     return { success: true, user: getUserById(userId), message: 'Đã rắc thóc cho gà! Gà sẽ đẻ trứng sau 60 giây.' };
 
   } else if (animalType === 'pig') {
@@ -604,6 +611,7 @@ export function handleFeedAnimal(userId, animalType, animalId) {
     pig.productReady = false;
 
     saveUserProfile(userId, { pigs, inventory });
+    updateQuestProgress(userId, 'feed_animal', 1);
     return { success: true, user: getUserById(userId), message: 'Đã đổ máng cám cho heo! Heo sẽ lớn sau 2.5 phút.' };
   }
 

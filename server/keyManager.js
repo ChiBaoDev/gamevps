@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { db } from './db.js';
+import { BASE_MAIN_QUESTS, BASE_DAILY_QUESTS } from './questEngine.js';
 
 // Quản lý các phiên đang online trong RAM (chỉ lưu token, userId, keyCode, socket, lastSeen)
 export const activeSessions = new Map(); // key_code -> { token, userId, socket: WebSocket, lastSeen, role }
@@ -344,6 +345,38 @@ export function formatUserProfile(record) {
   try { houses = JSON.parse(record.houses_json); } catch {}
   try { vehicles = JSON.parse(record.vehicles_json); } catch {}
   try { quests = JSON.parse(record.quests_json); } catch {}
+  if (!Array.isArray(quests)) quests = [];
+
+  // Đảm bảo luôn có 10 Chương Cốt Truyện Chính Tuyến
+  let mainQuests = quests.filter(q => q.category === 'main' || (q.id && q.id.startsWith('main_')));
+  if (mainQuests.length === 0) {
+    mainQuests = BASE_MAIN_QUESTS.map(q => ({
+      ...q,
+      progress: 0,
+      completed: false,
+      claimed: false,
+    }));
+  } else {
+    for (const bmq of BASE_MAIN_QUESTS) {
+      if (!mainQuests.some(q => q.id === bmq.id)) {
+        mainQuests.push({ ...bmq, progress: 0, completed: false, claimed: false });
+      }
+    }
+  }
+
+  // Đảm bảo luôn có 5 Nhiệm vụ Hằng Ngày
+  let dailyQuests = quests.filter(q => q.category === 'daily' || (q.id && q.id.startsWith('daily_')));
+  if (dailyQuests.length === 0) {
+    dailyQuests = BASE_DAILY_QUESTS.map(q => ({
+      ...q,
+      progress: 0,
+      completed: false,
+      claimed: false,
+    }));
+  }
+
+  quests = [...mainQuests, ...dailyQuests];
+
   try { 
     if (record.stats_json) {
       const parsedStats = JSON.parse(record.stats_json);
@@ -380,6 +413,7 @@ export function formatUserProfile(record) {
     currentArea: 'farm',
     stats,
     quests,
+    lastQuestReset: record.last_quest_reset || null,
     lastLogin: Date.now(),
   };
 }

@@ -13,6 +13,7 @@ import {
   getLeaderboardData
 } from './keyManager.js';
 import { registerAdminRoutes } from './adminRoutes.js';
+import { updateQuestProgress } from './questEngine.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -336,6 +337,8 @@ app.post('/api/game/park/wish', requireUser, (req, res) => {
     prizeText: rewardText,
   });
 
+  updateQuestProgress(req.user.id, 'park_interact', 1);
+
   res.json({ success: true, user: getUserById(req.user.id), message: rewardText });
 });
 
@@ -465,6 +468,7 @@ wss.on('connection', (ws, req) => {
           type: 'PARK_PLAYER_JOINED',
           player: playerObj,
         });
+        updateQuestProgress(sessionUser.id, 'park_interact', 1);
         return;
       }
 
@@ -506,6 +510,7 @@ wss.on('connection', (ws, req) => {
           text: msg.text,
           time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
         });
+        updateQuestProgress(sessionUser.id, 'park_interact', 1);
         return;
       }
 

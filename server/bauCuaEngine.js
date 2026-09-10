@@ -1,5 +1,6 @@
 import { getDb } from './db.js';
 import { getUserByToken, activeSessions } from './keyManager.js';
+import { updateQuestProgress } from './questEngine.js';
 
 /**
  * Danh mục 6 Linh vật Bầu Cua
@@ -175,6 +176,7 @@ class BauCuaRoom {
                 )
             WHERE id = ?
           `).run(totalWinXu, totalWinXu, userId);
+          updateQuestProgress(userId, 'baucua_win', 1);
         } else if (totalBetXu > 0) {
           db.prepare(`
             UPDATE users 
@@ -242,6 +244,8 @@ class BauCuaRoom {
 
     // Lấy số dư mới
     const updatedUser = db.prepare('SELECT id, xu FROM users WHERE id = ?').get(userId);
+
+    updateQuestProgress(userId, 'baucua_play', 1);
 
     this.broadcastState();
 

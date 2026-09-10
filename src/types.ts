@@ -90,11 +90,19 @@ export interface InventoryItem {
 
 export interface DailyQuest {
   id: string;
+  category?: 'main' | 'daily';
+  order?: number;
+  chapter?: number;
+  chapterTitle?: string;
   title: string;
+  description?: string;
+  type?: string;
   progress: number;
   target: number;
   rewardXu: number;
+  rewardLuong?: number;
   rewardExp: number;
+  rewardItemName?: string;
   completed: boolean;
   claimed: boolean;
   icon: string;

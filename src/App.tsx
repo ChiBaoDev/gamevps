@@ -348,6 +348,7 @@ export default function App() {
           {showQuests && (
             <QuestModal
               user={user}
+              token={token}
               onUpdateUser={handleUpdateUser}
               onClose={() => setShowQuests(false)}
               onShowMessage={showMessage}
